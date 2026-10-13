@@ -6,6 +6,7 @@ import { AgentProvider, useAgent } from "@/components/agent/AgentProvider";
 import { ActivationProvider } from "@/components/agent/ActivationGuide";
 import { DocumentAccessProvider } from "@/components/agent/DocumentAccessWarning";
 import AgentNavbar from "@/components/agent/AgentNavbar";
+import AppFooter from "@/components/layout/AppFooter";
 import UpgradePopup from "@/components/agent/UpgradePopup";
 import { DashboardSkeleton, PageBodySkeleton } from "@/components/agent/skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,6 +43,8 @@ function Gate({ children }: { children: React.ReactNode }) {
           <main className="pb-28 transition-[padding] duration-200 lg:pl-[var(--sidebar-w,16rem)]">
             <Suspense fallback={<PageBodySkeleton />}>{children}</Suspense>
           </main>
+          {/* Pinned to the bottom; main's pb-28 keeps the last content clear of it. */}
+          <AppFooter fixed />
         </div>
       </DocumentAccessProvider>
     </ActivationProvider>

@@ -23,6 +23,12 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <Link href="/privacy" className="hover:text-white hover:underline">Privacy</Link>
         &nbsp;·&nbsp;
         <Link href="/terms" className="hover:text-white hover:underline">Terms</Link>
+        &nbsp;·&nbsp;
+        <Link href="/cookies" className="hover:text-white hover:underline">Cookies</Link>
+        &nbsp;·&nbsp;
+        <Link href="/refunds" className="hover:text-white hover:underline">Refunds</Link>
+        &nbsp;·&nbsp;
+        <Link href="/contact" className="hover:text-white hover:underline">Contact</Link>
       </footer>
     </div>
   );

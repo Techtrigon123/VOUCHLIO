@@ -86,8 +86,9 @@ const buildSections = (pricing: Prices): LegalSection[] => [
             pricing page.
           </li>
           <li>
-            Paid plans are paid in advance by UPI or bank transfer. After you submit your transaction ID and payment proof,
-            we verify the payment and activate your plan. Benefits run for one month (monthly billing) or one year (yearly
+            Paid plans are paid in advance, online through Razorpay (UPI, card, net banking or wallet) or by UPI with a
+            payment proof. Online payments activate your plan as soon as the payment is confirmed. For UPI proof payments,
+            we verify the payment after you submit your transaction ID and proof, then activate your plan. Benefits run for one month (monthly billing) or one year (yearly
             billing) from activation. If you renew before your plan ends, or during its grace period, the new term starts
             from your old end date.
           </li>

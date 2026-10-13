@@ -307,7 +307,7 @@ export const pricingFaq = (prices: PriceTable = PLAN_PRICES_INR) => [
   },
   {
     q: "What payment methods do you accept?",
-    a: "Pay by UPI using the QR code at checkout, then upload your payment screenshot and transaction ID. We verify it and activate your plan.",
+    a: "Pay online with UPI, debit or credit card, net banking or a wallet through Razorpay's secure checkout — your plan activates instantly. You can also pay by UPI QR code and upload the payment screenshot; we verify it and activate your plan.",
   },
   {
     q: "How is my data kept private?",

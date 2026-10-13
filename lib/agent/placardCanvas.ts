@@ -8,9 +8,6 @@ import { PLACARD_FONTS, PLACARD_THEMES, type PlacardCustom, type PlacardData, ty
 const LANDSCAPE = { w: 1754, h: 1240 };
 const PORTRAIT = { w: 1240, h: 1754 };
 
-export const PLACARD_FONT_HREF =
-  "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:wght@600;700&family=Great+Vibes&family=IBM+Plex+Sans:wght@500;700&family=Inter:wght@500;700;800&family=Lato:wght@700&family=Montserrat:wght@500;700;800&family=Playfair+Display:wght@700&family=Quicksand:wght@600;700&display=swap";
-
 interface ThemeStyle extends Required<Omit<PlacardCustom, "backgroundImage">> {
   accent: string;
   guestFontCss: string;

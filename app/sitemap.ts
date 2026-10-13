@@ -20,10 +20,11 @@ const PAGES: Entry[] = [
   ["/privacy", 0.3, "yearly"],
   ["/terms", 0.3, "yearly"],
   ["/refunds", 0.3, "yearly"],
+  ["/cookies", 0.3, "yearly"],
 ];
 
 // Legal pages change rarely: report their real "last updated" date instead of today.
-const LEGAL = new Set(["/privacy", "/terms", "/refunds"]);
+const LEGAL = new Set(["/privacy", "/terms", "/refunds", "/cookies"]);
 const legalUpdated = new Date(SITE.legal.lastUpdated);
 
 export default function sitemap(): MetadataRoute.Sitemap {

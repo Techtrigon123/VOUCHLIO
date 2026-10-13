@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/seo";
+import SignedInNotice, { signedInAgent } from "@/components/auth/SignedInNotice";
 import SignupForm from "./SignupForm";
 
 export const metadata: Metadata = pageMeta({
@@ -8,6 +9,8 @@ export const metadata: Metadata = pageMeta({
   path: "/signup",
 });
 
-export default function SignupPage() {
+export default async function SignupPage() {
+  const agent = await signedInAgent();
+  if (agent) return <SignedInNotice agent={agent} next="/signup" />;
   return <SignupForm />;
 }

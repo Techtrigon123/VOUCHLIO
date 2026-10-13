@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
     const requestedCycle = body?.billingCycle ?? "yearly";
 
     if (!isPaidPlan(planId)) return fail("Choose Gold or Platinum.");
+    const settings = await getAppSettings();
+    if (!settings.payments.manualUpi) return fail("Payment by UPI proof is switched off. Please pay online instead.", 403, "MANUAL_UPI_OFF");
     if (!isBillingCycle(requestedCycle)) return fail("Choose monthly or yearly billing.");
     // Monthly billing needs migration 0005 (plan_payments.billing_cycle); until then only yearly is sold.
     const cyclesStored = await hasColumn("plan_payments", "billing_cycle");
@@ -41,7 +43,7 @@ export async function POST(req: NextRequest) {
         return fail("Upload a PNG, JPG, WebP image or PDF under 3 MB.");
     }
 
-    const amountInr = (await getAppSettings()).pricing[planId][billingCycle];
+    const amountInr = settings.pricing[planId][billingCycle];
     const cycleFields = cyclesStored ? { billingCycle } : {};
     const proofType = hasNewProof ? (proof as string).slice(5, (proof as string).indexOf(";")) : undefined;
     const payment = existing

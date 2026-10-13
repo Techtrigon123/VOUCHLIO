@@ -130,7 +130,7 @@ export function DocumentAccessProvider({ children }: { children: React.ReactNode
             </DialogPrimitive.Portal>
           </DialogPrimitive.Root>
           {!open ? (
-            <div className="pointer-events-none fixed bottom-20 left-1/2 z-40 -translate-x-1/2 sm:bottom-6">
+            <div className="pointer-events-none fixed bottom-20 left-1/2 z-40 -translate-x-1/2 sm:bottom-16">
               <button
                 type="button"
                 onClick={() => setOpen(true)}

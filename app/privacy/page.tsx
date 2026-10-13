@@ -56,8 +56,10 @@ const sections: LegalSection[] = [
             <strong>Saved customers:</strong> customer records you save for reuse on invoices.
           </li>
           <li>
-            <strong>Plan payments:</strong> the UPI or bank transaction ID and the payment screenshot you upload when you
-            upgrade. We do not collect or store card numbers or UPI PINs.
+            <strong>Plan payments:</strong> for online payments, the Razorpay order and payment IDs, the amount, the method
+            type (for example UPI or card) and the payment status. For UPI proof payments, the transaction ID and the
+            screenshot you upload. Card numbers, bank logins and UPI PINs are entered on Razorpay&apos;s secure checkout and
+            never reach us.
           </li>
           <li>
             <strong>Messages:</strong> what you send us through the Contact page or in-app Support chat.
@@ -121,6 +123,11 @@ const sections: LegalSection[] = [
               <td>All data stored in the service</td>
             </tr>
             <tr>
+              <td>Razorpay</td>
+              <td>Online plan payments and refunds</td>
+              <td>The amount and plan, your name, email and mobile number (to prefill checkout), and the payment details you enter on Razorpay&apos;s checkout</td>
+            </tr>
+            <tr>
               <td>Anthropic (Claude)</td>
               <td>Upload auto-fill — reading a voucher or e-ticket you upload to fill the form</td>
               <td>Only the file you choose to upload. We do not keep a copy of the uploaded file.</td>
@@ -129,11 +136,6 @@ const sections: LegalSection[] = [
               <td>Chatwoot</td>
               <td>Live chat — the “Chat with us” window</td>
               <td>Messages you send in the chat and your IP address; if you are signed in, your name, email, company and plan</td>
-            </tr>
-            <tr>
-              <td>Google Fonts</td>
-              <td>Fonts in the welcome placard editor</td>
-              <td>Your IP address, when the placard editor loads fonts</td>
             </tr>
             <tr>
               <td>Our hosting provider</td>
@@ -188,7 +190,10 @@ const sections: LegalSection[] = [
     title: "Cookies and similar technologies",
     body: (
       <>
-        <p>We use only what the service needs to work. We do not use advertising or cross-site tracking cookies.</p>
+        <p>
+          We use only what the service needs to work. We do not use advertising or cross-site tracking cookies. The full list,
+          including settings saved in your browser, is in our <Link href="/cookies">Cookie Policy</Link>.
+        </p>
         <table>
           <thead>
             <tr>

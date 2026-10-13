@@ -4,6 +4,9 @@ import PartnersStrip from "@/components/marketing/PartnersStrip";
 import DocumentsSection from "@/components/marketing/DocumentsSection";
 import FeaturesSection from "@/components/marketing/FeaturesSection";
 import HowItWorksSection from "@/components/marketing/HowItWorksSection";
+import ComparisonSection from "@/components/marketing/ComparisonSection";
+import SecuritySection from "@/components/marketing/SecuritySection";
+import TrustSection from "@/components/marketing/TrustSection";
 import PricingSection from "@/components/marketing/PricingSection";
 import TestimonialsSection from "@/components/marketing/TestimonialsSection";
 import FAQSection from "@/components/marketing/FAQSection";
@@ -17,8 +20,11 @@ export default function HomePage() {
       <DocumentsSection />
       <FeaturesSection />
       <HowItWorksSection />
-      <PricingSection />
+      <ComparisonSection />
+      <SecuritySection />
+      <TrustSection />
       <TestimonialsSection />
+      <PricingSection />
       <PartnersStrip />
       <FAQSection />
       <CTASection />

@@ -530,7 +530,7 @@ function QuickStartPopup() {
   if (!open) return null;
   const caption = phase === "fill" ? "Fill guest and hotel details" : phase === "print" ? "Generating hotel voucher…" : "Hotel voucher ready";
   return (
-    <div role="dialog" aria-modal="false" aria-labelledby="qs-title" className="anim-rise fixed bottom-4 left-4 z-[45] w-[min(100vw-2rem,20rem)] rounded-3xl border border-brand-200 bg-white p-4 shadow-2xl shadow-brand-500/10">
+    <div role="dialog" aria-modal="false" aria-labelledby="qs-title" className="anim-rise fixed bottom-14 left-4 z-[45] w-[min(100vw-2rem,20rem)] rounded-3xl border border-brand-200 bg-white p-4 shadow-2xl shadow-brand-500/10">
       <button type="button" aria-label="Close quick start" onClick={close} className="absolute right-3 top-3 rounded-lg p-1 text-slate-400 hover:bg-slate-100">
         <X className="h-4 w-4" />
       </button>

@@ -5,6 +5,7 @@ import { requireAgent, ok, fail } from "@/lib/agent/server";
 import { freeUsage } from "@/lib/agent/entitlements";
 import { isPaidPlan, normalizeCycle, PLAN_SERVICES, planName, subscriptionState } from "@/lib/agent/plans";
 import { getAppSettings } from "@/lib/settings";
+import { isRazorpayConfigured } from "@/lib/payments/razorpay";
 
 /**
  * Plan status (subscription state, grace period, free allowance, open services),
@@ -32,6 +33,11 @@ export async function GET(req: NextRequest) {
       services: PLAN_SERVICES[subscription.plan],
       monthlyAvailable,
       prices: settings.pricing,
+      // Which ways to pay are open. Online needs the Razorpay keys, migration 0011 and the admin switch.
+      methods: {
+        online: settings.payments.onlineEnabled && isRazorpayConfigured() && (await hasColumn("plan_payments", "razorpay_order_id")),
+        manualUpi: settings.payments.manualUpi,
+      },
       pending: pending
         ? {
             id: pending.id,

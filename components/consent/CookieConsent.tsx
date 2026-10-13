@@ -75,8 +75,8 @@ export default function CookieConsent() {
             <p className="mt-1 text-sm leading-relaxed text-slate-600">
               We use essential cookies to run the site. With your permission we may also use analytics and marketing
               cookies. See our{" "}
-              <Link href="/privacy#cookies" className="font-medium text-brand-600 underline underline-offset-2">
-                Privacy Policy
+              <Link href="/cookies" className="font-medium text-brand-600 underline underline-offset-2">
+                Cookie Policy
               </Link>
               .
             </p>

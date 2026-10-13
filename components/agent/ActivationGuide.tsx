@@ -14,8 +14,8 @@ import {
 import { delayFor, isTyping, snooze, TYPING_PAUSE_MS } from "./prompt-timing";
 
 const KEY = "agent_activation_prompt";
-/** After it is closed, the complete-your-profile reminder comes back every 5 minutes — on every page, including document forms. */
-const REMIND_EVERY_MS = 5 * 60 * 1000;
+/** After it is closed, the complete-your-profile reminder comes back every 4 minutes — on every page, including document forms — until the profile is complete. */
+const REMIND_EVERY_MS = 4 * 60 * 1000;
 /** Pages where the guide stays out of the way (the agent is already fixing things there). */
 const QUIET_PATHS = ["/setup", "/dashboard/profile/edit"];
 

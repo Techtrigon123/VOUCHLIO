@@ -54,6 +54,8 @@ const DAILY_RULES: RateRule[] = [
   daily("support:bugs", (p, m) => p === "/api/agent/support/bugs" && m === "POST", 10, "user"),
   daily("support:callbacks", (p, m) => p === "/api/agent/support/callbacks" && m === "POST", 5, "user"),
   daily("plan:submit", (p, m) => p === "/api/agent/plan/submit" && m === "POST", 10, "user"),
+  daily("plan:rzp-order", (p, m) => p === "/api/agent/plan/razorpay/order" && m === "POST", 40, "user"),
+  daily("plan:rzp-verify", (p, m) => p === "/api/agent/plan/razorpay/verify" && m === "POST", 40, "user"),
   daily("profile:update", (p, m) => (p === "/api/agent/profile" || p === "/api/agent/setup") && m !== "GET", 100, "user"),
   daily("pdf", (p) => /^\/api\/agent\/documents\/[^/]+\/pdf$/.test(p), 1500, "user"),
   daily("export", (p) => p === "/api/agent/invoices/export", 100, "user"),
@@ -85,6 +87,10 @@ export const RATE_RULES: RateRule[] = [
   { id: "export", test: (p) => p === "/api/agent/invoices/export", limit: 10, windowSeconds: 60, store: "memory", scope: "user" },
   { id: "pdf", test: (p) => /^\/api\/agent\/documents\/[^/]+\/pdf$/.test(p), limit: 60, windowSeconds: 60, store: "memory", scope: "user" },
   { id: "tools", test: (p) => p.startsWith("/api/tools/"), limit: 20, windowSeconds: 60, store: "memory", scope: "ip" },
+  // Online plan payments: opening checkout and confirming it.
+  { id: "plan:rzp", test: (p, m) => p.startsWith("/api/agent/plan/razorpay/") && m === "POST", limit: 10, windowSeconds: 60, store: "memory", scope: "user" },
+  // Payment-gateway webhooks arrive from a few Razorpay IPs, in bursts after outages. Signed, so only a flood guard.
+  { id: "webhooks", test: (p) => p.startsWith("/api/webhooks/"), limit: 600, windowSeconds: 60, store: "memory", scope: "ip" },
   // Everything else under /api.
   { id: "api", test: (p) => p.startsWith("/api/"), limit: 120, windowSeconds: 60, store: "memory", scope: "user" },
   ...DAILY_RULES,

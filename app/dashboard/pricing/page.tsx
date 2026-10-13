@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { BackButton } from "@/components/ui/back-button";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertTriangle, Check, ChevronDown, Crown, FileUp, Gem, Loader2, Lock, Pencil, ShieldCheck, Sparkles, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, CreditCard, Crown, FileUp, Gem, Loader2, Lock, PartyPopper, Pencil, QrCode, ShieldCheck, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAgent } from "@/components/agent/AgentProvider";
@@ -28,6 +28,7 @@ import {
 } from "@/lib/agent/plans";
 import type { PlanId } from "@/lib/agent/types";
 import { PaymentDetailsSkeleton } from "@/components/agent/skeletons";
+import { loadRazorpay, openRazorpay, type RazorpaySuccess } from "@/lib/payments/checkout-client";
 
 interface PendingPayment {
   id: string;
@@ -50,6 +51,24 @@ interface PlanInfo {
   paymentConfig?: { planId: PaidPlanId; planName: string; cycle: BillingCycle; amountInr: number; upiId: string | null; payee: string; qr: string | null };
   /** Live prices (set by admins); falls back to PLAN_PRICES_INR. */
   prices?: Record<PaidPlanId, Record<BillingCycle, number>>;
+  /** Ways to pay right now: Razorpay online checkout and/or UPI + proof upload. */
+  methods?: { online: boolean; manualUpi: boolean };
+}
+
+interface RazorpayOrder {
+  keyId: string;
+  orderId: string;
+  amount: number;
+  currency: string;
+  description: string;
+  prefill: { name: string; email: string; contact: string };
+}
+
+interface PaidResult {
+  plan: string;
+  cycle: string;
+  expiresAt: string | null;
+  paymentId: string;
 }
 
 const PLAN_ICONS = { silver: ShieldCheck, gold: Sparkles, platinum: Gem };
@@ -72,7 +91,7 @@ function Cell({ value }: { value: boolean | string }) {
 }
 
 export default function PricingPage() {
-  const { agent } = useAgent();
+  const { agent, refresh } = useAgent();
   const router = useRouter();
   const params = useSearchParams();
   const [info, setInfo] = useState<PlanInfo | null>(null);
@@ -87,10 +106,13 @@ export default function PricingPage() {
     void api<PlanInfo>("/api/agent/plan").then((r) => r.success && r.data && setInfo(r.data));
   }, []);
 
-  useEffect(() => {
-    const p = params.get("plan") ?? "";
-    if (isPaidPlan(p)) setCheckout(p);
-  }, [params]);
+  // Open checkout when the URL asks for a plan (?plan=gold), including later in-page navigations.
+  const planParam = params.get("plan") ?? "";
+  const [seenPlanParam, setSeenPlanParam] = useState("");
+  if (planParam !== seenPlanParam) {
+    setSeenPlanParam(planParam);
+    if (isPaidPlan(planParam)) setCheckout(planParam);
+  }
 
   const prices = info?.prices ?? PLAN_PRICES_INR;
   const monthlyAvailable = info?.monthlyAvailable !== false;
@@ -302,6 +324,12 @@ export default function PricingPage() {
             if (params.get("plan")) router.replace("/dashboard/pricing");
           }}
           onSubmitted={(p) => setInfo((i) => (i ? { ...i, pending: p } : i))}
+          onPaid={async () => {
+            // The plan is already active on the server; refresh the badge, sidebar and this page.
+            await refresh();
+            const r = await api<PlanInfo>("/api/agent/plan");
+            if (r.success && r.data) setInfo(r.data);
+          }}
         />
       ) : null}
     </PageShell>
@@ -316,6 +344,7 @@ function CheckoutDialog({
   pending,
   onClose,
   onSubmitted,
+  onPaid,
 }: {
   planId: PaidPlanId;
   prices: Record<PaidPlanId, Record<BillingCycle, number>>;
@@ -324,11 +353,16 @@ function CheckoutDialog({
   pending: PendingPayment | null;
   onClose: () => void;
   onSubmitted: (p: PendingPayment) => void;
+  onPaid: () => Promise<void>;
 }) {
   const [cycle, setCycle] = useState<BillingCycle>(pending?.billingCycle ?? (monthlyAvailable ? initialCycle : "yearly"));
   const [config, setConfig] = useState<PlanInfo["paymentConfig"] | null>(null);
   const [loadError, setLoadError] = useState("");
-  const [mode, setMode] = useState<"checkout" | "submitted" | "edit">(pending ? "submitted" : "checkout");
+  const [mode, setMode] = useState<"checkout" | "submitted" | "edit" | "paid">(pending ? "submitted" : "checkout");
+  const [methods, setMethods] = useState<PlanInfo["methods"] | null>(null);
+  const [, setChoice] = useState<"online" | "upi" | null>(null);
+  const [paying, setPaying] = useState<"" | "opening" | "verifying">("");
+  const [paid, setPaid] = useState<PaidResult | null>(null);
   const [saved, setSaved] = useState<PendingPayment | null>(pending);
   const [txn, setTxn] = useState(pending?.paymentTransactionId ?? "");
   const [proof, setProof] = useState<{ dataUrl: string; name: string; type: string } | null>(null);
@@ -339,7 +373,10 @@ function CheckoutDialog({
     let cancelled = false;
     void api<PlanInfo>(`/api/agent/plan?plan=${planId}&cycle=${cycle}`).then((r) => {
       if (cancelled) return;
-      if (r.success && r.data?.paymentConfig) setConfig(r.data.paymentConfig);
+      if (r.success && r.data?.paymentConfig) {
+        setConfig(r.data.paymentConfig);
+        setMethods(r.data.methods ?? { online: false, manualUpi: true });
+      }
       else setLoadError(r.error?.message || "Could not load payment details");
     });
     return () => {
@@ -349,6 +386,63 @@ function CheckoutDialog({
 
   const name = config?.planName ?? (planId === "gold" ? "Gold" : "Platinum");
   const editing = mode === "edit";
+  // New payments go through Razorpay only. The UPI + proof form is kept just for editing a proof already submitted.
+  const payWith: "online" | "upi" = editing ? "upi" : "online";
+  const noMethod = !!methods && !methods.online && !methods.manualUpi;
+  const amountDue = config?.cycle === cycle ? config.amountInr : prices[planId][cycle];
+
+  const finishOnline = async (res: RazorpaySuccess) => {
+    setPaying("verifying");
+    const v = await api<PaidResult>("/api/agent/plan/razorpay/verify", { method: "POST", json: res });
+    setPaying("");
+    if (!v.success || !v.data) {
+      setError(v.error?.message || "We couldn't confirm your payment. Please contact support with your payment ID.");
+      return;
+    }
+    setPaid(v.data);
+    setMode("paid");
+    toast.success("Payment successful", { description: `Your ${name} plan is active.` });
+    await onPaid();
+  };
+
+  const payOnline = async () => {
+    setError("");
+    setPaying("opening");
+    const [order, ready] = await Promise.all([
+      api<RazorpayOrder>("/api/agent/plan/razorpay/order", { method: "POST", json: { planId, billingCycle: cycle } }),
+      loadRazorpay(),
+    ]);
+    if (!order.success || !order.data) {
+      setPaying("");
+      return setError(order.error?.message || "Couldn't start the payment. Please try again.");
+    }
+    if (!ready) {
+      setPaying("");
+      return setError("The payment window couldn't load. Check your internet connection, or turn off ad blockers for this site, and try again.");
+    }
+    const o = order.data;
+    const opened = openRazorpay(
+      {
+        key: o.keyId,
+        order_id: o.orderId,
+        amount: o.amount,
+        currency: o.currency,
+        name: "Vouchlio",
+        description: o.description,
+        image: `${window.location.origin}/logo-mark.png`,
+        prefill: o.prefill,
+        theme: { color: "#e63946" },
+        retry: { enabled: true, max_count: 3 },
+        modal: { confirm_close: true, ondismiss: () => setPaying((p) => (p === "opening" ? "" : p)) },
+        handler: (res) => void finishOnline(res),
+      },
+      (f) => setError(f.error?.description ? `Payment failed: ${f.error.description}. You can try again with another method.` : "Payment failed. You can try again with another method.")
+    );
+    if (!opened) {
+      setPaying("");
+      setError("The payment window couldn't open. Please refresh the page and try again.");
+    }
+  };
 
   const pickProof = async (f: File) => {
     if (!/^(image\/|application\/pdf)/.test(f.type)) return setError("Upload an image or PDF of your payment.");
@@ -382,16 +476,35 @@ function CheckoutDialog({
       open
       onOpenChange={(v) => !v && onClose()}
       size="md"
-      title={mode === "submitted" ? "Payment proof received" : editing ? `Edit ${name} payment` : `Choose ${name}`}
+      title={mode === "paid" ? "Payment successful" : mode === "submitted" ? "Payment proof received" : editing ? `Edit ${name} payment` : `Choose ${name}`}
       description={
-        mode === "submitted"
-          ? "Your payment is under review. You can view your details below or edit them if needed."
-          : editing
-            ? "Update your transaction ID or upload a new payment screenshot."
-            : "Pay using the details below, enter your transaction ID, and upload a screenshot of your payment."
+        mode === "paid"
+          ? "Thank you! Your plan is active right away."
+          : mode === "submitted"
+            ? "Your payment is under review. You can view your details below or edit them if needed."
+            : editing
+              ? "Update your transaction ID or upload a new payment screenshot."
+              : payWith === "online"
+                ? "Pay securely with UPI, card, net banking or wallet. Your plan activates as soon as the payment goes through."
+                : "Pay using the details below, enter your transaction ID, and upload a screenshot of your payment."
       }
     >
-      {mode === "submitted" && saved ? (
+      {mode === "paid" && paid ? (
+        <div className="mt-5 space-y-4">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+            <p className="flex items-center gap-2 text-sm font-semibold text-emerald-800"><PartyPopper className="h-4 w-4" /> {name} · {paid.cycle === "monthly" ? "Monthly" : "Yearly"} · Active</p>
+            {paid.expiresAt ? <p className="mt-1 text-xs text-emerald-700">Valid until {fmtDate(paid.expiresAt)}</p> : null}
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">Payment ID</p>
+            <p className="font-mono text-sm font-semibold text-slate-900">{paid.paymentId}</p>
+            <p className="mt-1 text-xs text-slate-500">Razorpay also emails you a receipt. Keep the payment ID for any questions.</p>
+          </div>
+          <div className="flex justify-end">
+            <button type="button" onClick={onClose} className={primaryBtn}>Start using {name}</button>
+          </div>
+        </div>
+      ) : mode === "submitted" && saved ? (
         <div className="mt-5 space-y-4">
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
             <p className="flex items-center gap-2 text-sm font-semibold text-emerald-800"><Crown className="h-4 w-4" /> {name} · {saved.billingCycle === "monthly" ? "Monthly" : "Yearly"} · {formatInr(saved.amountInr)}</p>
@@ -417,7 +530,40 @@ function CheckoutDialog({
         </div>
       ) : (
         <div className="mt-5 space-y-4">
-          {!editing ? (
+          {/* UPI + proof tab hidden for now — payments go straight to Razorpay. Re-enable with: !editing && methods?.online && methods.manualUpi */}
+          {false ? (
+            <div role="tablist" aria-label="Payment method" className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
+              {([
+                ["online", "Pay online", CreditCard],
+                ["upi", "UPI + upload proof", QrCode],
+              ] as const).map(([key, label, Icon]) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={payWith === key}
+                  onClick={() => {
+                    setChoice(key);
+                    setError("");
+                  }}
+                  className={cn("inline-flex h-9 items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition", payWith === key ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800")}
+                >
+                  <Icon className="h-4 w-4" /> {label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {!editing && noMethod ? (
+            <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">Payments are paused for a moment. Please contact support to upgrade.</p>
+          ) : !editing && payWith === "online" && !loadError ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs text-slate-500">Amount due ({cycle === "monthly" ? "1 month" : "1 year"} · GST inclusive)</p>
+              <p className="text-2xl font-bold text-slate-900">{formatInr(amountDue)}</p>
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> UPI, cards, net banking &amp; wallets · Secured by Razorpay
+              </p>
+            </div>
+          ) : !editing ? (
             loadError ? (
               <p className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{loadError}</p>
             ) : !config || config.cycle !== cycle ? (
@@ -470,6 +616,8 @@ function CheckoutDialog({
             </div>
           ) : null}
 
+          {payWith === "upi" && !noMethod ? (
+          <>
           <Field label="Transaction ID" htmlFor="txn" hint="Copy this from your payment app after you pay (UTR or transaction reference).">
             <TextInput id="txn" value={txn} onChange={(e) => setTxn(e.target.value)} placeholder="UPI / bank transaction reference" />
           </Field>
@@ -494,14 +642,23 @@ function CheckoutDialog({
               <p className="mt-2 text-xs text-slate-500">Current screenshot kept unless you upload a new one.</p>
             ) : null}
           </div>
+          </>
+          ) : null}
 
           {error ? <p role="alert" className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p> : null}
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => (editing ? setMode("submitted") : onClose())} className={secondaryBtn}>Cancel</button>
-            <button type="button" disabled={busy} onClick={submit} className={primaryBtn}>
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {busy ? (editing ? "Saving…" : "Uploading…") : editing ? "Save changes" : "Submit payment proof"}
-            </button>
+            {noMethod && !editing ? null : payWith === "online" ? (
+              <button type="button" disabled={!!paying || !methods} onClick={payOnline} className={primaryBtn}>
+                {paying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
+                {paying === "verifying" ? "Confirming payment…" : paying === "opening" ? "Opening secure checkout…" : `Pay ${formatInr(amountDue)}`}
+              </button>
+            ) : (
+              <button type="button" disabled={busy} onClick={submit} className={primaryBtn}>
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {busy ? (editing ? "Saving…" : "Uploading…") : editing ? "Save changes" : "Submit payment proof"}
+              </button>
+            )}
           </div>
         </div>
       )}

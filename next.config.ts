@@ -10,8 +10,10 @@ const securityHeaders = [
   // Browsers must not guess content types (e.g. treat an upload as script).
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
-  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  // payment: Razorpay Checkout's frame may use the Payment Request API (Google Pay, saved cards).
+  { key: "Permissions-Policy", value: 'camera=(), microphone=(), geolocation=(), payment=(self "https://api.razorpay.com" "https://checkout.razorpay.com"), usb=()' },
+  // allow-popups: Razorpay opens bank / 3-D Secure / UPI windows that report back to this page.
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
   // HTTPS only, once deployed (never on localhost).
   ...(isProd ? [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }] : []),
 ];

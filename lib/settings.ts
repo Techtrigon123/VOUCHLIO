@@ -29,7 +29,8 @@ export const DEFAULT_SUPPORT: SupportSettings = {
 };
 
 export interface AppSettings {
-  payments: { upiId: string | null; payeeName: string };
+  /** onlineEnabled: Razorpay checkout (also needs the RAZORPAY_* keys). manualUpi: pay by UPI + upload proof. */
+  payments: { upiId: string | null; payeeName: string; onlineEnabled: boolean; manualUpi: boolean };
   support: SupportSettings;
   pricing: Prices;
   ai: {
@@ -58,6 +59,8 @@ function build(rows: Map<string, Record<string, unknown>>): AppSettings {
     payments: {
       upiId: (typeof pay.upiId === "string" && pay.upiId.trim()) || process.env.PLAN_PAYMENT_UPI_ID?.trim() || null,
       payeeName: (typeof pay.payeeName === "string" && pay.payeeName.trim()) || process.env.PLAN_PAYMENT_PAYEE_NAME?.trim() || "Vouchlio",
+      onlineEnabled: pay.onlineEnabled !== false,
+      manualUpi: pay.manualUpi !== false,
     },
     support: {
       liveChat: flag("liveChat"),

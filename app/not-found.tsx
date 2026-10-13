@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Compass } from "lucide-react";
 import BrandMark from "@/components/brand/BrandMark";
+import Footer from "@/components/layout/Footer";
 import { BackButton } from "@/components/ui/back-button";
 
 export const metadata = {
@@ -41,6 +42,7 @@ export default function NotFound() {
           </Link>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

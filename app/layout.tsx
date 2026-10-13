@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import CookieConsent from "@/components/consent/CookieConsent";
 import ChatWidget from "@/components/ChatWidget";
@@ -84,7 +85,7 @@ export default function RootLayout({
     <html lang="en-IN" className={inter.variable} suppressHydrationWarning>
       <head>
         {/* Applies the saved light/dark choice before first paint, on every page. */}
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <Script id="theme" strategy="beforeInteractive">{THEME_SCRIPT}</Script>
       </head>
       <body className="min-h-screen bg-[var(--background)] antialiased">
         <NavigationTracker />

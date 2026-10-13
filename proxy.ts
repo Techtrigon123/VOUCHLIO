@@ -3,7 +3,6 @@ import { verifyToken } from "@/lib/auth/jwt";
 import { checkRateLimit, clientIp, findRules, retryMessage, type RateResult } from "@/lib/rate-limit";
 
 const PROTECTED_PATHS = ["/dashboard", "/setup"];
-const AUTH_PATHS = ["/login", "/signup"];
 const COOKIE = "checkin_token";
 
 const MB = 1024 * 1024;
@@ -120,12 +119,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect to dashboard if already authenticated and hitting auth pages
-  const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
-  if (isAuthPage && session) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
+  // Login and signup pages always render. If someone is already signed in, the page itself shows
+  // "Continue to dashboard / use a different account" after checking the session against the database
+  // (components/auth/SignedInNotice.tsx). Redirecting here on the cookie alone sent people straight past
+  // the forms and could loop on a stale session.
   return NextResponse.next();
 }
 

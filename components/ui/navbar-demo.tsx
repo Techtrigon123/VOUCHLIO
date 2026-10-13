@@ -1,6 +1,6 @@
 "use client"
 
-import { LayoutGrid, FileText, Receipt, HelpCircle, Info } from 'lucide-react'
+import { LayoutGrid, FileText, Receipt, HelpCircle, IndianRupee, Info } from 'lucide-react'
 import { NavBar } from "@/components/ui/tubelight-navbar"
 
 export function NavBarDemo() {
@@ -9,7 +9,8 @@ export function NavBarDemo() {
     { name: 'Documents', url: '/#documents', icon: FileText },
     { name: 'How it works', url: '/#how-it-works', icon: Receipt },
     { name: 'FAQ', url: '/#faq', icon: HelpCircle },
-    { name: 'Pricing', url: '/#pricing', icon: Info },
+    { name: 'Pricing', url: '/#pricing', icon: IndianRupee },
+    { name: 'About', url: '/about', icon: Info },
   ]
 
   return <NavBar items={navItems} />

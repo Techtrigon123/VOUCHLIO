@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Clock, LifeBuoy, MessageSquare } from "lucide-react";
 import ContactForm from "./ContactForm";
 import BrandMark from "@/components/brand/BrandMark";
+import Footer from "@/components/layout/Footer";
 import { BackButton } from "@/components/ui/back-button";
 
 export const metadata: Metadata = pageMeta({
@@ -61,9 +62,7 @@ export default function ContactPage() {
         </div>
       </main>
 
-      <footer className="py-4 text-center text-xs text-[var(--muted-foreground)]">
-        © {new Date().getFullYear()} Vouchlio
-      </footer>
+      <Footer />
     </div>
   );
 }

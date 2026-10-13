@@ -7,9 +7,11 @@ export async function POST() {
   return response;
 }
 
-// Plain links (`<a href="/api/auth/logout">`) issue a GET — sign out and land on login.
+// Plain links (`<a href="/api/auth/logout">`) issue a GET — sign out and land on login
+// (or on signup with ?next=/signup; nothing else is allowed, so this can't be used as an open redirect).
 export async function GET(req: NextRequest) {
-  const response = NextResponse.redirect(new URL("/login", req.url));
+  const next = req.nextUrl.searchParams.get("next") === "/signup" ? "/signup" : "/login";
+  const response = NextResponse.redirect(new URL(next, req.url));
   response.cookies.set(clearAuthCookie());
   return response;
 }

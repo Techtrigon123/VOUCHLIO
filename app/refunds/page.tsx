@@ -25,8 +25,8 @@ const buildSections = (pricing: Prices): LegalSection[] => [
         <p>
           Gold ({formatInr(pricing.gold.monthly)}/month or {formatInr(pricing.gold.yearly)}/year) and Platinum
           ({formatInr(pricing.platinum.monthly)}/month or {formatInr(pricing.platinum.yearly)}/year) are paid in
-          advance. Your plan is activated once we verify your payment, and its benefits run for one month or one year from that
-          date, depending on the billing you chose. Plans do not renew automatically, so you are never charged again without
+          advance. Online payments activate your plan straight away; UPI proof payments activate once we verify them. Benefits run for one month or one year from
+          activation, depending on the billing you chose. Plans do not renew automatically, so you are never charged again without
           choosing to. After a plan ends it keeps working for a grace period ({GRACE_DAYS.monthly} days for monthly,{" "}
           {GRACE_DAYS.yearly} days for yearly) so you can renew without interruption.
         </p>
@@ -52,7 +52,8 @@ const buildSections = (pricing: Prices): LegalSection[] => [
     title: "How to request a refund",
     body: (
       <p>
-        Send us your registered email, the plan you paid for and your UPI or bank transaction ID through our{" "}
+        Send us your registered email, the plan you paid for and your Razorpay payment ID (starts with <code>pay_</code>) or
+        your UPI transaction ID through our{" "}
         <Link href="/contact">contact page</Link>. We aim to reply within 3 working days. Approved refunds are credited to the
         original payment method, usually within 7–10 working days depending on your bank.
       </p>

@@ -15,7 +15,7 @@ const documents: (ImageInfo & { layout: string })[] = [
     description: "The confirmation your guest shows at check-in — hotel, stay dates, rooms and booking reference in one page.",
     includes: ["Guest & stay dates", "Rooms & meal plan", "Booking reference"],
     icon: BedDouble,
-    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=75&auto=format&fit=crop",
+    image: "/marketing/hotel-voucher.jpg",
     layout: "lg:col-span-2 lg:row-span-2",
     feature: true,
   },
@@ -24,7 +24,7 @@ const documents: (ImageInfo & { layout: string })[] = [
     description: "A priced quotation your customer approves before paying.",
     includes: ["Line items", "Taxes shown", "Before payment"],
     icon: FileText,
-    image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&q=75&auto=format&fit=crop",
+    image: "/marketing/proforma-invoice.jpg",
     layout: "",
   },
   {

@@ -10,7 +10,10 @@ import { faqs } from "@/components/marketing/faq-data";
 import { jsonLd, organizationLd } from "@/lib/seo";
 import { SITE } from "@/lib/site";
 
-const TITLE = "Hotel Voucher, Air Ticket & Invoice Software for Travel Agents | Vouchlio";
+// Rebuild the page at most once an hour, so the live numbers in TrustSection stay current.
+export const revalidate = 3600;
+
+const TITLE ="Hotel Voucher, Air Ticket & Invoice Software for Travel Agents | Vouchlio";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
