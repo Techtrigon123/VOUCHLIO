@@ -234,7 +234,7 @@ function AccountMenu({ agent, align = "end", children }: { agent: Agent; align?:
         <DropdownMenuItem className="cursor-pointer rounded-xl py-2" onSelect={() => router.push("/dashboard/profile/edit")}>
           <Settings className="mr-2 h-4 w-4 text-slate-500" /> Settings
         </DropdownMenuItem>
-        <DropdownMenuItem className="cursor-pointer rounded-xl py-2" onSelect={() => router.push("/dashboard/change-password")}>
+        <DropdownMenuItem className="cursor-pointer rounded-xl py-2" onSelect={() => router.push("/change-password")}>
           <KeyRound className="mr-2 h-4 w-4 text-slate-500" /> Change password
         </DropdownMenuItem>
         <DropdownMenuSeparator />

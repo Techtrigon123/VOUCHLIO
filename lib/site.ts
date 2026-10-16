@@ -9,6 +9,10 @@ export const SITE = {
   name: "Vouchlio",
   url: (process.env.NEXT_PUBLIC_APP_URL || "https://vouchlio.com").replace(/\/+$/, ""),
   tagline: "Travel document software for travel agents",
+  /** Public inbox for questions about plans, pricing, partnerships and billing (shown on Contact and in the footer). */
+  infoEmail: "info@vouchlio.com",
+  /** Help with the app itself; also the sender of password-reset emails (lib/email.ts). */
+  supportEmail: "support@vouchlio.com",
   description:
     "Create hotel vouchers, air tickets, travel itineraries, pickup vouchers, welcome placards, GST invoices, proforma invoices and receipts as branded PDFs — built for Indian travel agents, tour operators and DMCs.",
 
@@ -29,7 +33,7 @@ export const SITE = {
     jurisdictionCity: "Mumbai, Maharashtra",
     /** TODO: Grievance Officer's name and a monitored email address. */
     grievanceOfficer: "Grievance Officer",
-    grievanceEmail: "",
+    grievanceEmail: "info@vouchlio.com",
     /** Date shown as "Last updated" on the legal pages. */
     lastUpdated: "16 October 2026",
   },

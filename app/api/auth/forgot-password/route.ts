@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
         console.error("[forgot-password] send failed", err)
       );
     } else {
-      console.error("[forgot-password] RESEND_API_KEY is not set — reset email not sent.");
+      console.error("[forgot-password] Email isn't set up (SMTP_HOST / SMTP_USER / SMTP_PASS) — reset email not sent.");
     }
 
     return NextResponse.json({ success: true, message: GENERIC });

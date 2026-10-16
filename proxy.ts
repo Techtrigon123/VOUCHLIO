@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth/jwt";
 import { checkRateLimit, clientIp, findRules, retryMessage, type RateResult } from "@/lib/rate-limit";
 
-const PROTECTED_PATHS = ["/dashboard", "/setup"];
+const PROTECTED_PATHS = ["/dashboard", "/setup", "/change-password"];
 const COOKIE = "checkin_token";
 
 const MB = 1024 * 1024;

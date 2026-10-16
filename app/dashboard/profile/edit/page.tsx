@@ -143,7 +143,7 @@ export default function EditProfilePage() {
         description="Update your profile information to increase your trust level"
         actions={
           <>
-            <Link href="/dashboard/change-password" className={secondaryBtn}>
+            <Link href="/change-password" className={secondaryBtn}>
               <KeyRound className="h-4 w-4" /> Change password
             </Link>
             <a href="/api/auth/logout" className={secondaryBtn}>

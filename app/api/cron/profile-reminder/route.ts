@@ -76,7 +76,7 @@ function reminderEmail(name: string) {
 
 export async function GET(req: NextRequest) {
   if (!authorized(req)) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-  if (!emailConfigured()) return NextResponse.json({ success: false, error: "RESEND_API_KEY is not set." }, { status: 503 });
+  if (!emailConfigured()) return NextResponse.json({ success: false, error: "Email isn't set up — add SMTP_HOST, SMTP_USER and SMTP_PASS." }, { status: 503 });
   if (!(await hasColumn("users", "profile_reminder_sent_at"))) {
     return NextResponse.json(
       { success: false, error: "Run supabase/migrations/0008_profile_reminders.sql first." },
