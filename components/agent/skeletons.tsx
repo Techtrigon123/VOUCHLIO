@@ -1,12 +1,18 @@
+import { Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-/** Wraps skeletons so screen readers announce a single loading status. */
+/** Wraps skeletons so screen readers announce a single loading status, with a spinner centered on top. */
 function Loading({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
-    <div role="status" aria-live="polite" aria-busy="true" className={className}>
+    <div role="status" aria-live="polite" aria-busy="true" className={cn("relative", className)}>
       <span className="sr-only">{label}</span>
       {children}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 grid place-items-center">
+        <span className="grid h-12 w-12 place-items-center rounded-full border border-slate-200 bg-white shadow-md">
+          <Loader2 className="h-6 w-6 text-[var(--primary)] motion-safe:animate-spin" />
+        </span>
+      </div>
     </div>
   );
 }
@@ -151,22 +157,6 @@ export function DetailSkeleton({ label = "Loading document" }: { label?: string 
         </div>
         <Skeleton className="aspect-[1/1.414] w-full rounded-3xl" />
       </div>
-    </Loading>
-  );
-}
-
-/** Support chat bubbles. */
-export function ChatSkeleton() {
-  return (
-    <Loading label="Loading messages" className="space-y-3">
-      {[
-        ["mr-auto", "w-2/3"],
-        ["ml-auto", "w-1/2"],
-        ["mr-auto", "w-3/5"],
-        ["ml-auto", "w-2/5"],
-      ].map(([side, w], i) => (
-        <Skeleton key={i} className={cn("h-12 rounded-2xl", side, w)} />
-      ))}
     </Loading>
   );
 }

@@ -1,6 +1,5 @@
 import React from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 
 export default function CTASection() {
   return (
@@ -13,13 +12,6 @@ export default function CTASection() {
           Create a free account and start generating professional travel documents in minutes.
         </p>
         <div className="flex flex-col items-center gap-4">
-          <Link
-            href="/signup"
-            className="btn-neon h-14 w-full rounded-xl px-10 text-base sm:w-auto"
-          >
-            Start free
-            <ArrowRight className="h-4 w-4" />
-          </Link>
           <p className="text-sm text-slate-400">
             Already have an account?{" "}
             <Link href="/login" className="text-slate-300 underline underline-offset-4 hover:text-white">

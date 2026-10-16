@@ -23,7 +23,7 @@ export default function SmoothScroll() {
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       aria-label="Back to top"
       tabIndex={showTop ? 0 : -1}
-      className={`chat-aware glass-nav fixed bottom-5 right-5 z-[60] flex h-11 w-11 items-center justify-center rounded-full border text-black shadow-lg transition-all duration-300 hover:-translate-y-0.5 ${
+      className={`glass-nav fixed bottom-5 right-5 z-[60] flex h-11 w-11 items-center justify-center rounded-full border text-black shadow-lg transition-all duration-300 hover:-translate-y-0.5 ${
         showTop ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
       }`}
     >

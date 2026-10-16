@@ -465,6 +465,10 @@ html[data-theme="dark"] body { background-color: #0b0b0c; }
 html[data-theme="dark"] :is(.bg-white, .hover\:bg-white:hover) { background-color: #141416; }
 html[data-theme="dark"] :is(.bg-white\/70, .bg-white\/80, .bg-white\/85, .bg-white\/90, .bg-white\/95) { background-color: rgb(20 20 22 / 0.85); }
 html[data-theme="dark"] .text-black { color: #fafafa; }
+/* Native <select> lists: Windows Chrome/Edge paint the open list white while option text follows the
+   light dark-mode text colour, so every option looked blank. Give the list its own dark colours. */
+html[data-theme="dark"] :is(option, optgroup) { background-color: var(--popover); color: var(--popover-foreground); }
+html[data-theme="dark"] option:disabled { color: #71717a; }
 html[data-theme="dark"] .skeleton { background-color: #1c1c1f; }
 html[data-theme="dark"] .skeleton::after { background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.06), transparent); }
 html[data-theme="dark"] .legal-prose :is(strong, th) { color: #fafafa; }
@@ -537,9 +541,30 @@ html[data-theme="dark"] .keep-light .text-black { color: #000000; }
 .auth-card .text-red-500 { color: #ffc2c7; }
 .auth-card [data-password-toggle] { color: rgb(255 255 255 / 0.7); }
 
-/* Live chat bubble (components/ChatWidget.tsx) sits bottom-right: lift anything else anchored there. */
-html.has-chat-widget .chat-aware {
-  bottom: 5.5rem;
+/* Notification bell (components/agent/NotificationBell.tsx): a short swing when something new
+   arrives, and a pop on the unread badge. */
+@keyframes bell-ring {
+  0%, 100% { transform: rotate(0); }
+  10% { transform: rotate(16deg); }
+  20% { transform: rotate(-14deg); }
+  30% { transform: rotate(11deg); }
+  40% { transform: rotate(-8deg); }
+  50% { transform: rotate(5deg); }
+  60% { transform: rotate(-3deg); }
+  70% { transform: rotate(1deg); }
+}
+.bell-ring {
+  transform-origin: 50% 8%;
+  animation: bell-ring 1.2s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+@keyframes badge-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.badge-pop { animation: badge-pop 0.35s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .bell-ring, .badge-pop { animation: none; }
 }
 
 /* Document cards (components/marketing/DocumentsSection.tsx): gentle 3D tilt toward the cursor. */

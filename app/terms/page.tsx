@@ -73,7 +73,7 @@ const buildSections = (pricing: Prices): LegalSection[] => [
       <>
         <ul>
           <li>
-            <strong>Silver</strong> is free and includes hotel vouchers, invoices and proforma invoices, with up
+            <strong>Silver</strong> is free and includes hotel vouchers and tax invoices, with up
             to {FREE_MONTHLY_DOCUMENTS} new documents per calendar month (India time). Documents stay open for{" "}
             {SILVER_RETENTION_DAYS} days from creation and are then locked (not deleted). PDFs carry a watermark, and upload
             auto-fill is limited per day.

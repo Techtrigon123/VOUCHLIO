@@ -10,7 +10,7 @@ export const SITE = {
   url: (process.env.NEXT_PUBLIC_APP_URL || "https://vouchlio.com").replace(/\/+$/, ""),
   tagline: "Travel document software for travel agents",
   description:
-    "Create hotel vouchers, air tickets, pickup vouchers, welcome placards, GST invoices, proforma invoices and receipts as branded PDFs — built for Indian travel agents, tour operators and DMCs.",
+    "Create hotel vouchers, air tickets, travel itineraries, pickup vouchers, welcome placards, GST invoices, proforma invoices and receipts as branded PDFs — built for Indian travel agents, tour operators and DMCs.",
 
   /** TODO: full URLs of your real social profiles (e.g. "https://www.linkedin.com/company/vouchlio"). Empty ones are hidden. */
   social: {
@@ -31,6 +31,6 @@ export const SITE = {
     grievanceOfficer: "Grievance Officer",
     grievanceEmail: "",
     /** Date shown as "Last updated" on the legal pages. */
-    lastUpdated: "27 September 2026",
+    lastUpdated: "16 October 2026",
   },
 } as const;

@@ -2,10 +2,45 @@
 
 import type { ApiResult } from "./types";
 
-/** JSON fetch that never throws for HTTP errors — callers branch on `success`. */
-export async function api<T>(url: string, init?: RequestInit & { json?: unknown }): Promise<ApiResult<T>> {
+/**
+ * Successful GET results are kept in this tab's memory (never on disk — the API still sends
+ * no-store) so moving between dashboard pages doesn't refetch the same data. Any write clears
+ * everything, so a page never shows data from before the agent's own change. Data changed
+ * elsewhere (another tab, an admin) shows up within GET_TTL_MS or on a full reload.
+ */
+const GET_TTL_MS = 30_000;
+const gets = new Map<string, { at: number; result: Promise<ApiResult<unknown>> }>();
+
+/** Forget every cached GET — call after signing in or anything else the cache can't see. */
+export function clearApiCache() {
+  gets.clear();
+}
+
+/**
+ * JSON fetch that never throws for HTTP errors — callers branch on `success`.
+ * GETs are served from a short-lived cache; pass `fresh: true` to always hit the server.
+ */
+export async function api<T>(url: string, init?: RequestInit & { json?: unknown; fresh?: boolean }): Promise<ApiResult<T>> {
+  const { fresh, ...rest } = init ?? {};
+  if ((rest.method ?? "GET").toUpperCase() !== "GET") {
+    gets.clear();
+    // Clear again afterwards: a GET that started during the write may have cached older data.
+    return request<T>(url, rest).finally(() => gets.clear());
+  }
+  const hit = gets.get(url);
+  if (!fresh && hit && Date.now() - hit.at < GET_TTL_MS) return hit.result.then((r) => structuredClone(r) as ApiResult<T>);
+  const result = request<T>(url, rest);
+  gets.set(url, { at: Date.now(), result });
+  // Errors (expired session, network) are never reused.
+  void result.then((r) => {
+    if (!r.success && gets.get(url)?.result === result) gets.delete(url);
+  });
+  return result.then((r) => structuredClone(r));
+}
+
+async function request<T>(url: string, init: RequestInit & { json?: unknown }): Promise<ApiResult<T>> {
   try {
-    const { json, ...rest } = init ?? {};
+    const { json, ...rest } = init;
     const res = await fetch(url, {
       cache: "no-store",
       ...rest,

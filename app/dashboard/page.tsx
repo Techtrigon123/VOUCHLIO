@@ -80,6 +80,7 @@ const TILES: Tile[] = [
   { key: "invoice", label: "Invoices", href: "/dashboard/invoices?type=invoice&new=1", icon: DOC_ICONS.invoice },
   { key: "proforma", label: "Proforma", href: "/dashboard/invoices?type=proforma&new=1", icon: DOC_ICONS.proforma },
   { key: "receipt", label: "Receipts", href: "/dashboard/invoices?type=receipt&new=1", icon: DOC_ICONS.receipt },
+  { key: "itinerary", label: "Itineraries", href: "/dashboard/itineraries/new", icon: DOC_ICONS.itinerary },
 ];
 
 const TILE_TONES = DOC_TONES;

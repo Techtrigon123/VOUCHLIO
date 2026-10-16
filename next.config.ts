@@ -27,6 +27,11 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: securityHeaders },
       // Authenticated API data must never be cached by browsers or proxies.
       { source: "/api/:path*", headers: [{ key: "Cache-Control", value: "no-store" }] },
+      // Public images keep their names when replaced, so cache for a day and revalidate in the background.
+      {
+        source: "/:dir(brand|marketing|partners)/:file*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
+      },
     ];
   },
   experimental: {

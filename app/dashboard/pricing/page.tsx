@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { BackButton } from "@/components/ui/back-button";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertTriangle, Check, ChevronDown, CreditCard, Crown, FileUp, Gem, Loader2, Lock, PartyPopper, Pencil, QrCode, ShieldCheck, Sparkles, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, CreditCard, Crown, FileUp, Loader2, Lock, PartyPopper, Pencil, QrCode, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAgent } from "@/components/agent/AgentProvider";
@@ -28,6 +28,7 @@ import {
 } from "@/lib/agent/plans";
 import type { PlanId } from "@/lib/agent/types";
 import { PaymentDetailsSkeleton } from "@/components/agent/skeletons";
+import { Pricing } from "@/components/ui/pricing";
 import { loadRazorpay, openRazorpay, type RazorpaySuccess } from "@/lib/payments/checkout-client";
 
 interface PendingPayment {
@@ -71,7 +72,6 @@ interface PaidResult {
   paymentId: string;
 }
 
-const PLAN_ICONS = { silver: ShieldCheck, gold: Sparkles, platinum: Gem };
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
@@ -154,110 +154,35 @@ export default function PricingPage() {
         ) : null}
       </section>
 
-      <div className="mt-8 flex flex-col items-center gap-2">
-        <div role="radiogroup" aria-label="Billing cycle" className="inline-flex rounded-full border border-slate-200 bg-white p-1 shadow-sm">
-          {(["monthly", "yearly"] as const).map((c) => (
-            <button
-              key={c}
-              type="button"
-              role="radio"
-              aria-checked={cycle === c}
-              disabled={c === "monthly" && !monthlyAvailable}
-              onClick={() => setCycle(c)}
-              className={cn(
-                "h-9 rounded-full px-5 text-sm font-semibold capitalize transition disabled:cursor-not-allowed disabled:opacity-40",
-                cycle === c ? "bg-[var(--primary)] text-white shadow" : "text-slate-600 hover:text-slate-900"
-              )}
-            >
-              {c}
-              {c === "yearly" ? <span className={cn("ml-1.5 text-[11px] font-bold normal-case", cycle === c ? "text-brand-neon" : "text-brand-600")}>Save up to {Math.max(yearlySaving("gold", prices), yearlySaving("platinum", prices))}%</span> : null}
-            </button>
-          ))}
-        </div>
-        {!monthlyAvailable ? <p className="text-xs text-slate-500">Monthly billing is coming soon.</p> : null}
-      </div>
-
-      <div className="mt-6 grid gap-5 lg:grid-cols-3">
-        {PLANS.map((p) => {
-          const Icon = PLAN_ICONS[p.id];
-          const isCurrent = p.id === current;
-          const isRenewal = p.id === sub.paidPlan;
-          const amount = p.id === "silver" ? null : prices[p.id][cycle];
-          return (
-            <div
-              key={p.id}
-              className={cn(
-                "relative flex flex-col rounded-3xl border bg-white p-6",
-                p.featured ? "border-brand-300 shadow-xl shadow-brand-500/10 ring-4 ring-brand-100" : "border-slate-200"
-              )}
-            >
-              {p.badge ? (
-                <span className={cn("absolute -top-3 left-6 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide", p.featured ? "bg-[var(--primary)] text-white" : "bg-slate-900 text-white")}>
-                  {p.badge}
-                </span>
-              ) : null}
-              <div className="flex items-center justify-between">
-                <span className={cn("flex h-11 w-11 items-center justify-center rounded-2xl", p.featured ? "bg-[var(--primary)] text-white" : "bg-brand-50 text-brand-600")}>
-                  <Icon className="h-5 w-5" />
-                </span>
-                {isCurrent ? <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Current plan</span> : null}
-              </div>
-              <h2 className="mt-4 text-xl font-bold text-slate-900">{p.name}</h2>
-              <p className="mt-1 text-sm text-slate-500">{p.headline}</p>
-              <div className="mt-4">
-                {amount === null ? (
-                  <p className="text-3xl font-bold text-slate-900">Free</p>
-                ) : (
-                  <p className="text-3xl font-bold text-slate-900">
-                    {formatInr(amount)} <span className="text-sm font-medium text-slate-500">per {cycle === "monthly" ? "month" : "year"} · GST inclusive</span>
-                  </p>
-                )}
-                <p className="mt-1 text-xs text-slate-500">
-                  {amount === null
-                    ? "No subscription · no credit card"
-                    : cycle === "yearly"
-                      ? `Save ${yearlySaving(p.id as PaidPlanId, prices)}% vs monthly · ${GRACE_DAYS.yearly}-day grace period`
-                      : `Billed monthly · ${GRACE_DAYS.monthly}-day grace period`}
-                </p>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-2" aria-label="Plan highlights">
-                {p.highlights.map((h) => (
-                  <div key={h.label} className="rounded-2xl bg-slate-50 px-3 py-2">
-                    <p className="text-sm font-bold text-slate-900">{h.value}</p>
-                    <p className="text-[11px] text-slate-500">{h.label}</p>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-slate-400">Services · {p.services.length} of {ALL_SERVICES.length}</p>
-              <ul className="mt-2 space-y-1.5">
-                {ALL_SERVICES.map((k) => {
-                  const open = p.services.includes(k);
-                  return (
-                    <li key={k} className={cn("flex items-center gap-2 text-sm", open ? "text-slate-800" : "text-slate-400")}>
-                      {open ? <Check className="h-4 w-4 shrink-0 text-brand-500" strokeWidth={3} /> : <Lock className="h-3.5 w-3.5 shrink-0" />}
-                      {SERVICE_LABELS[k]}
-                    </li>
-                  );
-                })}
-              </ul>
-              <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-slate-400">Also included</p>
-              <ul className="mt-2 flex-1 space-y-2">
-                {p.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-slate-700">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" strokeWidth={3} /> {f}
-                  </li>
-                ))}
-              </ul>
-              {p.id === "silver" ? (
-                <button type="button" disabled className={cn(secondaryBtn, "mt-6 w-full")}>{isCurrent ? "Your current plan" : "Included"}</button>
-              ) : (
-                <button type="button" onClick={() => setCheckout(p.id as PaidPlanId)} className={cn(p.featured ? primaryBtn : secondaryBtn, "mt-6 w-full")}>
-                  {info?.pending?.planId === p.id ? "View payment" : isRenewal ? `Renew ${cycle}` : p.cta}
-                </button>
-              )}
-            </div>
-          );
-        })}
+      <div className="mt-10">
+        <Pricing
+          cycle={cycle}
+          onCycleChange={setCycle}
+          monthlyAvailable={monthlyAvailable}
+          annualSaving={`Save up to ${Math.max(yearlySaving("gold", prices), yearlySaving("platinum", prices))}%`}
+          plans={PLANS.map((p) => {
+            const isCurrent = p.id === current;
+            const paidId = p.id === "silver" ? null : (p.id as PaidPlanId);
+            return {
+              name: p.name,
+              monthly: paidId ? prices[paidId].monthly : null,
+              yearly: paidId ? prices[paidId].yearly : null,
+              features: ALL_SERVICES.map((k) => ({ label: SERVICE_LABELS[k], included: p.services.includes(k) })),
+              extras: [...p.highlights.filter((h) => h.label !== "Services").map((h) => `${h.value} ${h.label.toLowerCase()}`), ...p.features],
+              description: p.headline,
+              tag: isCurrent ? "Current plan" : undefined,
+              priceNote: !paidId
+                ? "No subscription · no credit card"
+                : cycle === "yearly"
+                  ? `Save ${yearlySaving(paidId, prices)}% vs monthly · ${GRACE_DAYS.yearly}-day grace period`
+                  : `Billed monthly · ${GRACE_DAYS.monthly}-day grace period`,
+              buttonText: !paidId ? (isCurrent ? "Your current plan" : "Included") : info?.pending?.planId === p.id ? "View payment" : p.id === sub.paidPlan ? `Renew ${cycle}` : p.cta,
+              onSelect: paidId ? () => setCheckout(paidId) : undefined,
+              buttonDisabled: !paidId,
+              isPopular: !!p.featured,
+            };
+          })}
+        />
       </div>
       <p className="mt-3 text-center text-xs text-slate-500">All prices in INR · GST inclusive · No auto-renew — you pay again only when you choose to</p>
 
@@ -308,7 +233,7 @@ export default function PricingPage() {
         <p className="mt-1 text-slate-500">Start free on Silver. Upgrade to Gold or Platinum when your business is ready.</p>
         <div className="mt-4 flex flex-wrap justify-center gap-2">
           <Link href="/dashboard" className="btn-glow inline-flex h-10 items-center rounded-xl px-5 text-sm">Go to workspace</Link>
-          <Link href="/dashboard/support" className="inline-flex h-10 items-center rounded-xl bg-white px-5 text-sm font-semibold text-black ring-1 ring-slate-200 hover:ring-brand-300">Talk to sales</Link>
+          <Link href="/contact" className="inline-flex h-10 items-center rounded-xl bg-white px-5 text-sm font-semibold text-black ring-1 ring-slate-200 hover:ring-brand-300">Talk to sales</Link>
         </div>
       </section>
 

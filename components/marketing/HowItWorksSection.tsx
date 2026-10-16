@@ -17,7 +17,7 @@ interface Step {
 /* ─── Mini illustrations ─────────────────────────────────────────────────── */
 
 function ChooseDemo() {
-  const docs = ["Hotel voucher", "Air ticket", "Pickup", "Invoice"];
+  const docs = ["Hotel voucher", "Itinerary", "Air ticket", "Invoice"];
   return (
     <div className="grid grid-cols-2 gap-1.5">
       {docs.map((d, i) => (
@@ -102,7 +102,7 @@ function ShareDemo() {
 }
 
 const steps: Step[] = [
-  { number: 1, icon: FileText, title: "Choose a document", description: "Pick the travel document you need — voucher, ticket, transfer, placard or invoice.", demo: <ChooseDemo /> },
+  { number: 1, icon: FileText, title: "Choose a document", description: "Pick the travel document you need — voucher, itinerary, ticket, transfer, placard or invoice.", demo: <ChooseDemo /> },
   { number: 2, icon: Pencil, title: "Enter your details", description: "Add booking, customer and pricing details — or upload a voucher or e-ticket to fill the form for you.", demo: <DetailsDemo /> },
   { number: 3, icon: Eye, title: "Review your document", description: "Check everything in the preview before you create the final PDF.", demo: <ReviewDemo /> },
   { number: 4, icon: Download, title: "Generate and share", description: "Download a professional PDF, print it, or share it with your customer.", demo: <ShareDemo /> },

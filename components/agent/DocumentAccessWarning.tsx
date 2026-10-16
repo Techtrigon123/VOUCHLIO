@@ -16,6 +16,7 @@ import {
   Plane,
   Car,
   Receipt,
+  Route,
   Signpost,
   X,
 } from "lucide-react";
@@ -68,6 +69,7 @@ export const KIND_ICONS: Record<DocumentKind, React.ComponentType<{ className?: 
   invoice: FileText,
   proforma: FileText,
   receipt: Receipt,
+  itinerary: Route,
 };
 
 export function DocumentAccessProvider({ children }: { children: React.ReactNode }) {

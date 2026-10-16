@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bug, ChevronRight, Headset, MessageSquareText, PhoneCall, Ticket, type LucideIcon } from "lucide-react";
+import { Bug, ChevronRight, Headset, PhoneCall, Ticket, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/agent/client";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -10,13 +10,13 @@ import BugReportDialog from "./BugReportDialog";
 import CallbackDialog from "./CallbackDialog";
 
 interface Center {
-  channels: { liveChat: boolean; tickets: boolean; bugReports: boolean; callbacks: boolean; callbackHours: string };
+  channels: { tickets: boolean; bugReports: boolean; callbacks: boolean; callbackHours: string };
   openTickets: number;
   activeCallbacks: number;
 }
 
 const DEFAULT: Center = {
-  channels: { liveChat: true, tickets: true, bugReports: true, callbacks: true, callbackHours: "Mon–Sat, 10 am – 7 pm IST" },
+  channels: { tickets: true, bugReports: true, callbacks: true, callbackHours: "Mon–Sat, 10 am – 7 pm IST" },
   openTickets: 0,
   activeCallbacks: 0,
 };
@@ -27,7 +27,6 @@ interface Option {
   text: string;
   icon: LucideIcon;
   tone: string;
-  badge?: string;
 }
 
 /** "Facing any trouble?" — every way to reach support, in one menu in the top bar. */
@@ -44,7 +43,6 @@ export default function SupportMenu() {
     });
 
   const options: Option[] = [
-    { key: "liveChat", title: "Live Chat", text: "Chat with our team in real time. Usually the quickest answer.", icon: MessageSquareText, tone: "bg-emerald-50 text-emerald-600 ring-emerald-100", badge: "Fastest" },
     {
       key: "tickets",
       title: "Support Ticket",
@@ -64,8 +62,7 @@ export default function SupportMenu() {
   const visible = options.filter((o) => center.channels[o.key]);
 
   const choose = (key: Option["key"]) => {
-    if (key === "liveChat") router.push("/dashboard/support");
-    else if (key === "tickets") router.push("/dashboard/support/tickets");
+    if (key === "tickets") router.push("/dashboard/support/tickets");
     else if (key === "bugReports") setBugOpen(true);
     else setCallbackOpen(true);
   };
@@ -79,7 +76,6 @@ export default function SupportMenu() {
         >
           <Headset className="h-4 w-4 text-brand-500" />
           <span className="hidden sm:inline">Support</span>
-          {center.channels.liveChat ? <span className="h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-emerald-100" aria-label="Live chat available" /> : null}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" sideOffset={10} className="w-[min(92vw,26rem)] rounded-3xl p-3 shadow-2xl">
           <div className="px-2 pb-3 pt-2">
@@ -102,7 +98,6 @@ export default function SupportMenu() {
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
                       <span className="text-[15px] font-semibold text-black">{o.title}</span>
-                      {o.badge ? <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">{o.badge}</span> : null}
                     </span>
                     <span className="mt-0.5 block text-[13px] leading-snug text-slate-500">{o.text}</span>
                   </span>

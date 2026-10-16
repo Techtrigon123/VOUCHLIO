@@ -9,7 +9,8 @@ export type DocumentKind =
   | "welcome_placard"
   | "invoice"
   | "proforma"
-  | "receipt";
+  | "receipt"
+  | "itinerary";
 
 /** The signed-in agent as the client sees it (`GET /api/auth/me`). */
 export interface Agent {

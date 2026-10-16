@@ -163,13 +163,13 @@ export default function DocumentAccessPage() {
               <div className="rounded-3xl border border-brand-200 bg-white p-5">
                 <Sparkles className="h-6 w-6 text-brand-500" />
                 <p className="mt-2 text-lg font-bold text-slate-900">Gold · from {formatInr(prices.gold.monthly)}/mo</p>
-                <p className="text-sm text-slate-600">Keep every file forever — no {summary.retentionDays}-day limit — and add air tickets. Reopen locked vouchers and invoices. {formatInr(prices.gold.yearly)} if you pay yearly.</p>
+                <p className="text-sm text-slate-600">Keep every file forever — no {summary.retentionDays}-day limit — and add proforma invoices and air tickets. Reopen locked vouchers and invoices. {formatInr(prices.gold.yearly)} if you pay yearly.</p>
                 <Link href="/dashboard/pricing?plan=gold" className={`${primaryBtn} mt-4`}>Choose Gold</Link>
               </div>
               <div className="rounded-3xl border border-slate-200 bg-white p-5">
                 <Crown className="h-6 w-6 text-slate-700" />
                 <p className="mt-2 text-lg font-bold text-slate-900">Platinum · from {formatInr(prices.platinum.monthly)}/mo</p>
-                <p className="text-sm text-slate-600">All 7 services, including pickup vouchers and welcome placards, plus unlimited PDF uploads. {formatInr(prices.platinum.yearly)} if you pay yearly.</p>
+                <p className="text-sm text-slate-600">All 8 services, including the itinerary builder, pickup vouchers and welcome placards, plus unlimited PDF uploads. {formatInr(prices.platinum.yearly)} if you pay yearly.</p>
                 <Link href="/dashboard/pricing?plan=platinum" className={`${secondaryBtn} mt-4`}>Choose Platinum</Link>
               </div>
               <p className="text-sm text-slate-500 md:col-span-2">

@@ -1,16 +1,35 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Check, Crown, ShieldCheck, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/agent/client";
-import { PLANS, planName, type BillingCycle } from "@/lib/agent/plans";
+import { PLANS, planName, renewalReminder, subscriptionState, type BillingCycle } from "@/lib/agent/plans";
+import { useAgent } from "@/components/agent/AgentProvider";
 import type { PlanId } from "@/lib/agent/types";
 
-/** Set by the login form; the dashboard shows this offer once, right after signing in. */
+/** Set by the login form; the dashboard shows this offer right after signing in. */
 export const OFFER_FLAG = "vouchlio-show-upgrade-offer";
+/** Free (Silver) agents also see the offer once a day; this remembers the last day it showed. */
+const DAILY_KEY = "vouchlio-upgrade-offer-day";
+
+const istToday = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
+function readDay(): string | null {
+  try {
+    return localStorage.getItem(DAILY_KEY);
+  } catch {
+    return istToday(); // storage blocked: treat as already shown, so it can't appear on every page
+  }
+}
+function markShownToday() {
+  try {
+    localStorage.setItem(DAILY_KEY, istToday());
+  } catch {
+    /* ignore */
+  }
+}
 
 type Prices = { gold: { monthly: number; yearly: number }; platinum: { monthly: number; yearly: number } };
 interface PlanInfo {
@@ -28,7 +47,7 @@ const PITCH: Record<"gold" | "platinum", { headline: string; lead: string; point
     points: [
       "Unlimited new documents — no 4-per-month cap",
       "Your logo on every PDF, with no watermark",
-      "Airline e-tickets with PNR and ticket numbers",
+      "Proforma invoices and airline e-tickets with PNR",
       "Document history kept forever + priority support",
     ],
   },
@@ -36,7 +55,7 @@ const PITCH: Record<"gold" | "platinum", { headline: string; lead: string; point
     headline: "Upgrade to Vouchlio Platinum",
     lead: "Every service, plus vouchers designed only for your agency.",
     points: [
-      "All 7 services — receipts, pickup vouchers and welcome placards",
+      "All 8 services — itinerary builder, receipts, pickup vouchers and welcome placards",
       "Exclusive voucher layouts, colours and fonts",
       "Unlimited upload auto-fill for vouchers and tickets",
       "Dedicated onboarding and template revisions",
@@ -46,36 +65,56 @@ const PITCH: Record<"gold" | "platinum", { headline: string; lead: string; point
 
 const fmt = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 
+/**
+ * Plan offer. Shown right after signing in, and once a day to free (Silver) agents, including ones
+ * whose paid plan has fully ended (then it offers to renew that plan). Paid plans that are ending
+ * soon or in their grace period get RenewalPopup instead, so the two never stack.
+ */
 export default function UpgradePopup() {
+  const { agent } = useAgent();
   const [info, setInfo] = useState<PlanInfo | null>(null);
   const [open, setOpen] = useState(false);
   const [cycle, setCycle] = useState<BillingCycle>("yearly");
+  const [renewPlan, setRenewPlan] = useState<"gold" | "platinum" | null>(null);
+  const checked = useRef(false);
 
   useEffect(() => {
+    if (!agent || checked.current) return;
+    checked.current = true;
     let flagged = false;
     try {
       flagged = sessionStorage.getItem(OFFER_FLAG) === "1";
       sessionStorage.removeItem(OFFER_FLAG);
     } catch {
-      /* storage blocked — just don't show the offer */
+      /* storage blocked — rely on the daily check */
     }
-    if (!flagged) return;
+    const sub = agent.subscription ?? subscriptionState(agent);
+    if (renewalReminder(sub)) return; // RenewalPopup handles plans that are ending
+    const free = sub.plan === "silver";
+    if (!flagged && !(free && readDay() !== istToday())) return;
     let live = true;
     void api<PlanInfo>("/api/agent/plan").then((r) => {
       // Nothing to offer on Platinum, or while a payment is being reviewed.
       if (!live || !r.success || !r.data || r.data.plan === "platinum" || r.data.pending) return;
       setInfo(r.data);
-      setCycle(r.data.monthlyAvailable ? "monthly" : "yearly");
-      window.setTimeout(() => live && setOpen(true), 600);
+      setRenewPlan(sub.status === "lapsed" ? sub.paidPlan : null);
+      setCycle(sub.status === "lapsed" && sub.cycle ? sub.cycle : r.data.monthlyAvailable ? "monthly" : "yearly");
+      window.setTimeout(() => {
+        if (!live) return;
+        setOpen(true);
+        if (free) markShownToday();
+      }, 600);
     });
     return () => {
       live = false;
     };
-  }, []);
+  }, [agent]);
 
   if (!info) return null;
-  const target: "gold" | "platinum" = info.plan === "gold" ? "platinum" : "gold";
-  const pitch = PITCH[target];
+  const target: "gold" | "platinum" = renewPlan ?? (info.plan === "gold" ? "platinum" : "gold");
+  const pitch = renewPlan
+    ? { ...PITCH[target], headline: `Your ${planName(target)} plan has ended`, lead: `Renew ${planName(target)} to unlock your documents and services again — your saved work is waiting.` }
+    : PITCH[target];
   const plan = PLANS.find((p) => p.id === target)!;
   const price = info.prices[target];
   const save = Math.max(0, Math.round((1 - price.yearly / (price.monthly * 12)) * 100));
@@ -167,7 +206,7 @@ export default function UpgradePopup() {
                 onClick={() => setOpen(false)}
                 className="mt-5 flex h-14 w-full items-center justify-center rounded-full bg-[#e63946] text-base font-bold text-black shadow-[0_10px_40px_-8px_rgba(230,57,70,0.7)] transition hover:bg-[#ec5662]"
               >
-                Upgrade to {planName(target)}
+                {renewPlan ? "Renew" : "Upgrade to"} {planName(target)}
               </Link>
               <p className="mt-2 text-center text-xs text-white/50">
                 Pay {fmt(amount)} by UPI · activated once we verify your payment

@@ -14,7 +14,7 @@ import { createDocument, documentExists, latestVersionInGroup, listDocuments, up
 import type { DocumentKind } from "@/lib/agent/types";
 
 const DOCUMENT_KINDS: DocumentKind[] = [
-  "hotel_voucher", "air_ticket", "pickup_voucher", "welcome_placard", "invoice", "proforma", "receipt",
+  "hotel_voucher", "air_ticket", "pickup_voucher", "welcome_placard", "invoice", "proforma", "receipt", "itinerary",
 ];
 const isKind = (k: unknown): k is DocumentKind => typeof k === "string" && (DOCUMENT_KINDS as string[]).includes(k);
 const FIELDS = ["all", "title", "number", "ref", "preparedBy"] as const;

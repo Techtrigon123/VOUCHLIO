@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import AuthLogo from "@/components/auth/AuthLogo";
+import { clearApiCache } from "@/lib/agent/client";
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -71,6 +72,8 @@ export default function SignupForm() {
         return;
       }
 
+      // Drop any data cached for a previous session in this tab.
+      clearApiCache();
       toast.success("Account created! Let's finish your quick setup.");
       router.push("/setup");
       router.refresh();

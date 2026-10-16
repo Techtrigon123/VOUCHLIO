@@ -14,7 +14,6 @@ export const metadata: Metadata = pageMeta({
 const COOKIES: { name: string; type: string; purpose: string; lasts: string }[] = [
   { name: "checkin_token", type: "Essential cookie", purpose: "Keeps you signed in. HTTP-only, so page scripts can't read it, and only sent to this site.", lasts: "30 days, or until you log out" },
   { name: "cookie_consent", type: "Essential cookie", purpose: "Remembers your cookie choices.", lasts: "12 months" },
-  { name: "cw_conversation, cw_user_*", type: "Essential cookie (Chatwoot)", purpose: "Keeps your live-chat conversation open as you move between pages. Cleared when you log out.", lasts: "Set by Chatwoot" },
 ];
 
 const STORAGE: { name: string; type: string; purpose: string; lasts: string }[] = [
@@ -57,7 +56,7 @@ const CATEGORIES: { name: string; purpose: string; examples: string; status: str
   {
     name: "Essential",
     purpose: "Required for sign-in, security and the document workspace (vouchers, tickets, placards, invoices and related tools). Can't be switched off while you use the service.",
-    examples: "Sign-in cookie (checkin_token), cookie choices (cookie_consent), live chat (cw_conversation)",
+    examples: "Sign-in cookie (checkin_token), cookie choices (cookie_consent)",
     status: "Always on",
   },
   {
@@ -136,9 +135,6 @@ const sections: LegalSection[] = [
         <p>Some services we rely on may set their own cookies under their own policies. We limit them to what is needed to run the service.</p>
         <ul>
           <li>
-            <strong>Chatwoot (live chat):</strong> keeps your chat conversation open as you move between pages.
-          </li>
-          <li>
             <strong>Razorpay (payments):</strong> when you pay for a plan, Razorpay&apos;s secure checkout window may set its own
             cookies, for example to prevent fraud.
           </li>
@@ -157,7 +153,7 @@ const sections: LegalSection[] = [
           <CookieSettingsButton className="font-semibold text-[var(--primary)] underline underline-offset-2" />.
         </p>
         <ul>
-          <li><strong>Log out</strong> to remove the sign-in and live-chat cookies straight away.</li>
+          <li><strong>Log out</strong> to remove the sign-in cookie straight away.</li>
           <li>Clear this site&apos;s data in your browser to remove everything, including your display settings.</li>
           <li>If we ever add analytics, it will stay off until you allow it in your cookie settings.</li>
         </ul>

@@ -76,6 +76,5 @@ Then pitch each new resource to the trade media above and to travel-business blo
 
 ## 5. Still worth doing
 
-- **Thin tool pages**: the `/tools/*` pages are mostly a form. Add 300–600 words of unique content to each (what the document must include, an example, FAQs), so each one can rank for its own search term.
 - **Remove unused images** from `public/` (`voyenta-logo.png` is 1.2 MB, and `voyenta-logo-mark.png`, `brand/vouchlio-logo.png`, `brand/vouchlio-logo-dark.png` and `brand/vouchlio-mark-light.png` are unused). They don't slow pages down, but they bloat the deployment.
 - **Core Web Vitals**: after launch, test the home page in PageSpeed Insights (<https://pagespeed.web.dev>) on mobile and check the Core Web Vitals report in Search Console once it has data.

@@ -87,6 +87,18 @@ export const NAV_ITEMS: NavItem[] = [
       { label: "Receipts", description: "Payment receipts", href: "/dashboard/invoices?type=receipt", icon: DOC_ICONS.receipt },
     ],
   },
+  {
+    key: "itinerary",
+    label: "Itinerary",
+    icon: DOC_ICONS.itinerary,
+    href: "/dashboard/itineraries",
+    match: "/dashboard/itineraries",
+    kind: "itinerary",
+    subItems: [
+      { label: "New itinerary", description: "Day-by-day trip plan with stays, meals and price", href: "/dashboard/itineraries/new", icon: Plus },
+      { label: "History", description: "Your saved itineraries", href: "/dashboard/itineraries", icon: History },
+    ],
+  },
   { key: "pricing", label: "Pricing", icon: NAV_ICONS.pricing, href: "/dashboard/pricing", match: "/dashboard/pricing" },
 ];
 
@@ -116,6 +128,8 @@ export function documentHref(kind: DocumentKind, id: string): string {
       return `/dashboard/pickup/new?id=${encodeURIComponent(id)}`;
     case "welcome_placard":
       return `/dashboard/placards/new?edit=${encodeURIComponent(id)}`;
+    case "itinerary":
+      return `/dashboard/itineraries/new?id=${encodeURIComponent(id)}`;
     default:
       return `/dashboard/invoices?type=${kind}&id=${encodeURIComponent(id)}`;
   }

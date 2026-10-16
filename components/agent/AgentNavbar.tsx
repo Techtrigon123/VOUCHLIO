@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronDown,
+  Crown,
+  Gem,
   KeyRound,
   Lock,
   LogOut,
@@ -35,21 +37,37 @@ import { SearchPalette } from "./SearchPalette";
 import { isItemActive, lockedNavPlan, visibleNavItems, type NavItem } from "./nav-config";
 import BrandMark from "@/components/brand/BrandMark";
 import SupportMenu from "./support/SupportMenu";
+import NotificationBell from "./NotificationBell";
 import { DOC_ICONS, DOC_TONES, NAV_ICONS, NAV_TONES, type Tone } from "./doc-style";
 
 /* ─── Shared pieces (also used by the dashboard and profile pages) ─────────── */
 
+/** Each plan looks like its name: metallic gold, metallic platinum, plain silver. Fixed colours, so dark mode doesn't change them. */
+const PLAN_STYLE: Record<PlanId, { className: string; icon: LucideIcon }> = {
+  silver: { className: "bg-slate-100 text-slate-600 ring-slate-200 hover:bg-slate-200", icon: Sparkles },
+  gold: {
+    className: "bg-[linear-gradient(135deg,#fdeeb5_0%,#e9b949_42%,#f7d774_68%,#c9922b_100%)] text-[#4a3000] ring-[#c9922b]/60 shadow-sm shadow-amber-500/30 hover:brightness-105",
+    icon: Crown,
+  },
+  platinum: {
+    className: "bg-[linear-gradient(135deg,#f8fafc_0%,#cbd5e1_42%,#eef2f7_68%,#94a3b8_100%)] text-[#1e293b] ring-[#94a3b8]/70 shadow-sm shadow-slate-500/30 hover:brightness-105",
+    icon: Gem,
+  },
+};
+
 export function PlanBadge({ plan, className }: { plan: PlanId; className?: string }) {
+  const style = PLAN_STYLE[plan] ?? PLAN_STYLE.silver;
   return (
     <Link
       href="/dashboard/pricing"
       title={`${plan.charAt(0).toUpperCase()}${plan.slice(1)} plan — compare plans`}
       className={cn(
-        "inline-flex h-7 items-center gap-1 rounded-full bg-brand-50 px-3 text-[10px] font-extrabold uppercase tracking-[0.14em] text-brand-600 ring-1 ring-brand-200 transition hover:bg-brand-100",
+        "inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[11px] font-extrabold uppercase tracking-[0.14em] ring-1 transition",
+        style.className,
         className
       )}
     >
-      <span aria-hidden className="text-[11px]">✦</span>
+      <style.icon aria-hidden className="h-3.5 w-3.5" strokeWidth={2.5} />
       {plan}
     </Link>
   );
@@ -461,15 +479,17 @@ export default function AgentNavbar() {
             ) : null}
           </div>
 
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
             <button type="button" onClick={() => setSearchOpen(true)} aria-label="Search documents" title="Search (/ or Ctrl+K)" className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100">
               <Search className="h-[18px] w-[18px]" />
             </button>
+            <NotificationBell />
             <SupportMenu />
-            <PlanBadge plan={agent.subscription?.plan ?? agent.subscriptionPlan} className="ml-1 hidden sm:inline-flex" />
-            <div className="ml-1">
+            <span aria-hidden className="mx-0.5 hidden h-6 w-px bg-slate-200 sm:block" />
+            <PlanBadge plan={agent.subscription?.plan ?? agent.subscriptionPlan} className="hidden sm:inline-flex" />
+            <div className="flex h-9 items-center">
               <AccountMenu agent={agent}>
-                <AgentAvatar agent={agent} size={32} />
+                <AgentAvatar agent={agent} size={36} />
               </AccountMenu>
             </div>
           </div>

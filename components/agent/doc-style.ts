@@ -7,6 +7,7 @@ import {
   Headset,
   LayoutGrid,
   Presentation,
+  Route,
   ReceiptIndianRupee,
   ReceiptText,
   TicketsPlane,
@@ -28,6 +29,7 @@ export const DOC_ICONS: Record<DocumentKind, LucideIcon> = {
   invoice: ReceiptText,
   proforma: FilePenLine,
   receipt: ReceiptIndianRupee,
+  itinerary: Route,
 };
 
 export const NAV_ICONS = {
@@ -54,6 +56,7 @@ export const DOC_TONES: Record<DocumentKind, Tone> = {
   invoice: { chip: "bg-emerald-50 text-emerald-600", solid: "bg-emerald-500 text-white", bar: "bg-emerald-500" },
   proforma: { chip: "bg-teal-50 text-teal-600", solid: "bg-teal-500 text-white", bar: "bg-teal-500" },
   receipt: { chip: "bg-orange-50 text-orange-600", solid: "bg-orange-500 text-white", bar: "bg-orange-500" },
+  itinerary: { chip: "bg-blue-50 text-blue-600", solid: "bg-blue-500 text-white", bar: "bg-blue-500" },
 };
 
 export const NAV_TONES: Record<"home" | "pricing" | "profile" | "support", Tone> = {

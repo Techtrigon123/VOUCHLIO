@@ -18,7 +18,7 @@ const PILLARS: { icon: LucideIcon; title: string; text: string }[] = [
   {
     icon: FileCheck2,
     title: "Professional travel documents",
-    text: "Create branded, print-ready PDFs for hotel vouchers, air tickets, pickup vouchers, welcome placards, GST invoices, proforma invoices and payment receipts. Every document is structured and ready to share.",
+    text: "Create branded, print-ready PDFs for hotel vouchers, travel itineraries, air tickets, pickup vouchers, welcome placards, GST invoices, proforma invoices and payment receipts. Every document is structured and ready to share.",
   },
   {
     icon: Workflow,
@@ -40,9 +40,9 @@ const OFFER = [
   "Air ticket PDFs",
   "Pickup and transfer vouchers",
   "Airport and hotel welcome placards",
+  "Day-by-day itinerary builder (Platinum)",
   "Upload auto-fill from vouchers and e-tickets",
   "Saved customers and one document workspace",
-  "Free online tools: voucher, invoice, receipt and quotation generators",
 ];
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {

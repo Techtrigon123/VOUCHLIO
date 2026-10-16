@@ -503,6 +503,159 @@ export function pickupProgress(d: PickupVoucherData) {
   return { done, total: required.length, percent: Math.round((done / required.length) * 100) };
 }
 
+/* ─── Itinerary (Platinum) ───────────────────────────────────────────────── */
+
+export type ItineraryTemplate = "journey" | "modern" | "elegant";
+export const ITINERARY_TEMPLATES: { id: ItineraryTemplate; label: string; description: string; color: string }[] = [
+  { id: "journey", label: "Journey", description: "Timeline of numbered days with a coloured rule under your letterhead", color: "#0f766e" },
+  { id: "modern", label: "Modern", description: "Bold colour band across the top, clean day cards", color: "#1d4ed8" },
+  { id: "elegant", label: "Elegant", description: "Serif headings and fine double rules for premium packages", color: "#7c2d12" },
+];
+
+export type ItineraryPriceMode = "hide" | "per_person" | "total";
+export const ITINERARY_PRICE_MODES: { id: ItineraryPriceMode; label: string; hint: string }[] = [
+  { id: "per_person", label: "Per person", hint: "Price for each traveller" },
+  { id: "total", label: "Package total", hint: "One price for the whole group" },
+  { id: "hide", label: "Hide price", hint: "Share the plan without a price" },
+];
+
+export interface ItineraryDay {
+  title: string;
+  /** Where the guests sleep that night (also shown in "Trip at a glance"). */
+  city: string;
+  description: string;
+  /** One activity per line; printed as a list. */
+  activities: string;
+  hotel: string;
+  transfer: string;
+  meals: { breakfast: boolean; lunch: boolean; dinner: boolean };
+}
+
+export interface ItineraryData {
+  number: string;
+  title: string;
+  destination: string;
+  startDate: string;
+  travellerTitle: string;
+  travellerName: string;
+  adults: number;
+  children: number;
+  days: ItineraryDay[];
+  /** One item per line. */
+  inclusions: string;
+  exclusions: string;
+  priceMode: ItineraryPriceMode;
+  currency: string;
+  price: string;
+  priceNote: string;
+  validUntil: string;
+  notes: string;
+  preparedBy: string;
+  template: ItineraryTemplate;
+  color: string;
+}
+
+export const ITINERARY_MAX_DAYS = 30;
+
+export const newItineraryNumber = () => `ITN-${Date.now().toString().slice(-8)}`;
+
+export const newItineraryDay = (): ItineraryDay => ({
+  title: "",
+  city: "",
+  description: "",
+  activities: "",
+  hotel: "",
+  transfer: "",
+  meals: { breakfast: true, lunch: false, dinner: false },
+});
+
+/** One-tap lines for the inclusions / exclusions boxes. */
+export const INCLUSION_SUGGESTIONS = [
+  "Accommodation on twin sharing basis",
+  "Daily breakfast at the hotel",
+  "Airport / railway station transfers",
+  "Sightseeing by private vehicle as per itinerary",
+  "Driver allowance, tolls and parking",
+  "All applicable hotel taxes",
+];
+export const EXCLUSION_SUGGESTIONS = [
+  "Airfare / train fare",
+  "Lunch and dinner unless mentioned",
+  "Entry tickets to monuments and parks",
+  "Personal expenses such as laundry and tips",
+  "Travel insurance",
+  "GST and TCS as applicable",
+];
+
+export const defaultItinerary = (): ItineraryData => ({
+  number: newItineraryNumber(),
+  title: "",
+  destination: "",
+  startDate: "",
+  travellerTitle: "Mr.",
+  travellerName: "",
+  adults: 2,
+  children: 0,
+  days: [newItineraryDay()],
+  inclusions: "",
+  exclusions: "",
+  priceMode: "per_person",
+  currency: "INR",
+  price: "",
+  priceNote: "",
+  validUntil: "",
+  notes: "",
+  preparedBy: "",
+  template: "journey",
+  color: ITINERARY_TEMPLATES[0].color,
+});
+
+/** The date of day `index` (0-based) as YYYY-MM-DD, or "" without a valid start date. Works in UTC so it never shifts a day. */
+export function itineraryDayDate(startDate: string, index: number): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return "";
+  const t = Date.parse(`${startDate}T00:00:00Z`);
+  if (Number.isNaN(t)) return "";
+  return new Date(t + index * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** "3 Nights / 4 Days" from the number of days planned. */
+export const itineraryDuration = (days: number) =>
+  days <= 1 ? "1 Day" : `${days - 1} Night${days - 1 === 1 ? "" : "s"} / ${days} Days`;
+
+export const itineraryLines = (v: string) => v.split("\n").map((l) => l.trim()).filter(Boolean);
+
+export function itineraryMeals(m: ItineraryDay["meals"] | undefined): string {
+  const list = [m?.breakfast && "Breakfast", m?.lunch && "Lunch", m?.dinner && "Dinner"].filter(Boolean);
+  return list.length ? list.join(", ") : "No meals included";
+}
+
+/** Price shown on the PDF and the total kept with the saved document. */
+export function itineraryPrice(d: ItineraryData) {
+  const price = num(d.price);
+  const pax = Math.max(1, num(d.adults) + num(d.children));
+  if (d.priceMode === "hide" || price <= 0) return { show: false, price, total: undefined as number | undefined };
+  return { show: true, price, total: d.priceMode === "per_person" ? price * pax : price };
+}
+
+/** Required steps, shared by the builder's checklist and the server-side check. */
+export function itinerarySteps(d: ItineraryData) {
+  const daysOk = d.days.length > 0 && d.days.every((day) => !!s(day.title));
+  return [
+    { key: "trip", label: "Trip name & destination", done: !!s(d.title) && !!s(d.destination), error: !s(d.title) ? "Give the trip a name." : "Destination is required." },
+    { key: "dates", label: "Start date", done: /^\d{4}-\d{2}-\d{2}$/.test(d.startDate), error: "Start date is required." },
+    { key: "traveller", label: "Traveller", done: !!s(d.travellerName) && num(d.adults) >= 1, error: !s(d.travellerName) ? "Lead traveller's name is required." : "At least one adult is required." },
+    { key: "days", label: "Day-by-day plan", done: daysOk, error: d.days.length === 0 ? "Add at least one day." : "Give every day a title." },
+    { key: "price", label: "Price", done: d.priceMode === "hide" || num(d.price) > 0, error: "Enter a price greater than 0, or choose Hide price." },
+    { key: "preparedBy", label: "Your name", done: !!s(d.preparedBy), error: "Enter your name — it's printed as the person who prepared the itinerary." },
+  ];
+}
+
+export function validateItinerary(d: ItineraryData): string | null {
+  if (!Array.isArray(d.days)) return "Add at least one day.";
+  if (d.days.length > ITINERARY_MAX_DAYS) return `An itinerary can have up to ${ITINERARY_MAX_DAYS} days.`;
+  return itinerarySteps(d).find((step) => !step.done)?.error ?? null;
+}
+
 /* ─── Welcome placard ────────────────────────────────────────────────────── */
 
 export type PlacardTheme = "minimal" | "corporate" | "digital" | "airport" | "classic" | "journey";
@@ -749,6 +902,7 @@ export const KIND_LABELS: Record<DocumentKind, string> = {
   invoice: "Invoice",
   proforma: "Proforma",
   receipt: "Receipt",
+  itinerary: "Itinerary",
 };
 
 export interface DocumentDescription {
@@ -803,6 +957,19 @@ export function describeDocument(kind: DocumentKind, data: Record<string, unknow
         searchText: [d.guestName, d.city, d.voucherNumber, d.driverName, d.vehicleNumber].join(" ").toLowerCase(),
       };
     }
+    case "itinerary": {
+      const d = data as unknown as ItineraryData;
+      const days = Array.isArray(d.days) ? d.days.length : 0;
+      const traveller = [d.travellerTitle, d.travellerName].filter(Boolean).join(" ");
+      return {
+        title: `${s(d.title) || "Itinerary"} - ${traveller || "Traveller"}`,
+        subtitle: [s(d.destination), days ? itineraryDuration(days) : "", d.startDate].filter(Boolean).join(" · "),
+        number: s(d.number),
+        currency: d.currency || "INR",
+        total: itineraryPrice(d).total,
+        searchText: [d.title, d.destination, traveller, d.number, d.preparedBy, ...(d.days ?? []).map((x) => `${x.title} ${x.city}`)].join(" ").toLowerCase(),
+      };
+    }
     case "welcome_placard": {
       const d = data as unknown as PlacardData;
       const theme = PLACARD_THEMES.find((t) => t.id === d.theme)?.label ?? d.theme;
@@ -838,6 +1005,8 @@ export function validateDocument(kind: DocumentKind, data: Record<string, unknow
       const e = Object.values(pickupErrors(data as unknown as PickupVoucherData));
       return e[0] ?? null;
     }
+    case "itinerary":
+      return validateItinerary(data as unknown as ItineraryData);
     case "welcome_placard":
       return validatePlacard(data as unknown as PlacardData, companyName ?? "");
     default:

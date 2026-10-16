@@ -2,7 +2,7 @@ import "server-only";
 import React from "react";
 import { db } from "@/lib/db/supabase";
 import { ALL_SERVICES } from "@/lib/agent/plans";
-import { PLACARD_THEMES } from "@/lib/agent/documents";
+import { PLACARD_THEMES, VOUCHER_TEMPLATES } from "@/lib/agent/documents";
 
 /**
  * "Trusted by travel professionals" stats. Every number is real:
@@ -11,8 +11,6 @@ import { PLACARD_THEMES } from "@/lib/agent/documents";
  * - until then the cards show product facts that are true today.
  */
 
-/** The public tools under /tools (keep in step with app/tools). */
-const FREE_TOOLS = 7;
 const SHOW_AGENTS_FROM = 100;
 const SHOW_DOCUMENTS_FROM = 1000;
 const TTL_MS = 60 * 60 * 1000;
@@ -45,7 +43,7 @@ export default async function TrustSection() {
   const stats: { value: string; label: string }[] = [
     agents >= SHOW_AGENTS_FROM ? { value: roundedPlus(agents), label: "Travel businesses" } : { value: String(ALL_SERVICES.length), label: "Document types" },
     documents >= SHOW_DOCUMENTS_FROM ? { value: roundedPlus(documents), label: "Documents created" } : { value: String(PLACARD_THEMES.length), label: "Welcome placard designs" },
-    agents >= SHOW_AGENTS_FROM ? { value: String(ALL_SERVICES.length), label: "Document types" } : { value: String(FREE_TOOLS), label: "Free online tools" },
+    agents >= SHOW_AGENTS_FROM ? { value: String(ALL_SERVICES.length), label: "Document types" } : { value: String(VOUCHER_TEMPLATES.length), label: "Hotel voucher templates" },
     { value: "₹0", label: "To start on Silver" },
   ];
 

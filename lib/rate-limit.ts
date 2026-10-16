@@ -48,7 +48,6 @@ const DAILY_RULES: RateRule[] = [
   daily("documents:update", (p, m) => /^\/api\/agent\/documents\/[^/]+$/.test(p) && m === "PATCH", 1500, "user"),
   daily("payments:create", (p, m) => /^\/api\/agent\/documents\/[^/]+\/payments$/.test(p) && m === "POST", 300, "user"),
   daily("customers:create", (p, m) => p === "/api/agent/customers" && m === "POST", 200, "user"),
-  daily("support:send", (p, m) => p === "/api/agent/support" && m === "POST", 50, "user"),
   daily("support:tickets", (p, m) => p === "/api/agent/support/tickets" && m === "POST", 15, "user"),
   daily("support:replies", (p, m) => /^\/api\/agent\/support\/tickets\/[^/]+$/.test(p) && m === "POST", 100, "user"),
   daily("support:bugs", (p, m) => p === "/api/agent/support/bugs" && m === "POST", 10, "user"),
@@ -59,6 +58,7 @@ const DAILY_RULES: RateRule[] = [
   daily("profile:update", (p, m) => (p === "/api/agent/profile" || p === "/api/agent/setup") && m !== "GET", 100, "user"),
   daily("pdf", (p) => /^\/api\/agent\/documents\/[^/]+\/pdf$/.test(p), 1500, "user"),
   daily("export", (p) => p === "/api/agent/invoices/export", 100, "user"),
+  daily("preview", (p, m) => p === "/api/agent/documents/preview" && m === "POST", 3000, "user"),
 ];
 const AUTH_ROUTES = ["login", "signup", "forgot-password", "reset-password"];
 
@@ -86,7 +86,8 @@ export const RATE_RULES: RateRule[] = [
   { id: "extract", test: (p, m) => p === "/api/agent/extract" && m === "POST", limit: 10, windowSeconds: 60, store: "memory", scope: "user" },
   { id: "export", test: (p) => p === "/api/agent/invoices/export", limit: 10, windowSeconds: 60, store: "memory", scope: "user" },
   { id: "pdf", test: (p) => /^\/api\/agent\/documents\/[^/]+\/pdf$/.test(p), limit: 60, windowSeconds: 60, store: "memory", scope: "user" },
-  { id: "tools", test: (p) => p.startsWith("/api/tools/"), limit: 20, windowSeconds: 60, store: "memory", scope: "ip" },
+  // Live form previews re-render about a second after typing stops.
+  { id: "preview", test: (p, m) => p === "/api/agent/documents/preview" && m === "POST", limit: 40, windowSeconds: 60, store: "memory", scope: "user" },
   // Online plan payments: opening checkout and confirming it.
   { id: "plan:rzp", test: (p, m) => p.startsWith("/api/agent/plan/razorpay/") && m === "POST", limit: 10, windowSeconds: 60, store: "memory", scope: "user" },
   // Payment-gateway webhooks arrive from a few Razorpay IPs, in bursts after outages. Signed, so only a flood guard.

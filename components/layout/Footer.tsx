@@ -18,13 +18,6 @@ const footerLinks = {
     { href: "/#pricing", label: "Pricing" },
     { href: "/#faq", label: "FAQ" },
   ],
-  "Free tools": [
-    { href: "/tools/hotel-voucher", label: "Hotel voucher generator" },
-    { href: "/tools/gst-invoice", label: "GST invoice generator" },
-    { href: "/tools/proforma-invoice", label: "Proforma invoice" },
-    { href: "/tools/payment-receipt", label: "Payment receipt" },
-    { href: "/tools/travel-quotation", label: "Travel quotation" },
-  ],
   Company: [
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
@@ -42,7 +35,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-white/10 bg-black text-slate-300">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-6">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4">
@@ -98,9 +91,14 @@ export default function Footer() {
         <Separator className="my-10 bg-white/10" />
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-slate-400">
-            © {new Date().getFullYear()} Vouchlio. All rights reserved.
-          </p>
+          <div className="flex flex-col items-center gap-1 sm:items-start">
+            <p className="text-xs text-slate-400">
+              © {new Date().getFullYear()} Vouchlio. All rights reserved.
+            </p>
+            <p className="text-xs text-slate-400">
+              Powered by <span className="font-medium text-slate-300">Frozen Highway</span>
+            </p>
+          </div>
           <div className="flex items-center gap-4">
             <ThemeSwitch />
             <p className="hidden text-xs text-slate-400 sm:block">Built for travel professionals</p>

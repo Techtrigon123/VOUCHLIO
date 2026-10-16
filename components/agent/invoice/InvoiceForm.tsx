@@ -25,6 +25,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAgent } from "@/components/agent/AgentProvider";
+import { effectivePlan, planIncludes } from "@/lib/agent/plans";
+
 import { Field, NativeSelect, SectionCard, TextArea, TextInput, inputClass, primaryBtn, secondaryBtn } from "@/components/agent/ui";
 import { api, downloadPdf, imageFileToDataUrl, openPdf, sharePdfOnWhatsApp } from "@/lib/agent/client";
 import {
@@ -45,6 +47,14 @@ import {
 import type { Agent, DocumentSummary } from "@/lib/agent/types";
 import { CustomerDetailsDialog, CustomerPickerDialog, NumberSettingsDialog, type NumberInfo, type SavedCustomer } from "./dialogs";
 import { FormSkeleton } from "@/components/agent/skeletons";
+import { LivePreview } from "@/components/agent/LivePreview";
+
+/** Types the agent can switch between; ones their plan doesn't include are left out. */
+const TYPE_OPTIONS: { value: InvoiceKind; label: string }[] = [
+  { value: "invoice", label: "Invoice" },
+  { value: "proforma", label: "Proforma Invoice" },
+  { value: "receipt", label: "Receipt" },
+];
 
 const fmt = (n: number) => n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -183,7 +193,7 @@ export function InvoiceForm({
       <SectionCard title={docId ? `Edit ${labels.title.toLowerCase()}` : `${labels.title} form`} icon={UserRound}>
         <div className="grid gap-x-6 gap-y-4 lg:grid-cols-2">
           <Field label="Document type">
-            <NativeSelect value={data.docType} disabled={!!editId} onChange={(v) => changeType(v as InvoiceKind)} options={[{ value: "invoice", label: "Invoice" }, { value: "proforma", label: "Proforma Invoice" }, { value: "receipt", label: "Receipt" }]} />
+            <NativeSelect value={data.docType} disabled={!!editId} onChange={(v) => changeType(v as InvoiceKind)} options={TYPE_OPTIONS.filter((o) => o.value === data.docType || !agent || planIncludes(effectivePlan(agent), o.value))} />
           </Field>
           <Field label="Customer name" required hint={data.customerId ? `Using saved customer · ${data.billTo.email || data.billTo.phone || data.billTo.placeOfSupply || ""}` : "Pick from saved customers, or type a name and add details."}>
             <div className="flex gap-2">
@@ -344,6 +354,8 @@ export function InvoiceForm({
         </div>
       </SectionCard>
 
+      <LivePreview kind={data.docType} data={data} className="mx-auto w-full max-w-2xl" />
+
       {showChecklist && checklist.length ? (
         <div id="invoice-checklist" role="alert" className="rounded-3xl border border-rose-200 bg-rose-50 p-4">
           <p className="text-sm font-semibold text-rose-800">Before you save</p>
@@ -354,8 +366,7 @@ export function InvoiceForm({
       ) : null}
 
       <p className="text-right text-xs text-slate-500">Save &amp; Download stores the document and downloads the PDF. On mobile, WhatsApp can attach the PDF directly.</p>
-      {/* Compact, right-aligned so it never sits under the centred floating prompts. */}
-      <div className="chat-aware sticky bottom-4 z-10 ml-auto flex w-fit rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-lg backdrop-blur">
+      <div className="ml-auto flex w-fit">
         <div className="flex">
           <button type="button" onClick={() => run("download")} disabled={!!busy} className={cn(primaryBtn, "rounded-r-none")}>
             {busy === "download" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Save &amp; Download

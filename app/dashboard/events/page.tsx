@@ -35,7 +35,7 @@ export default function EventsPage() {
           </div>
           <p className="text-sm text-[var(--muted-foreground)] mt-0.5 pl-12">Your recent travel documents</p>
         </div>
-        <Link href="/tools/hotel-voucher">
+        <Link href="/dashboard/vouchers/new">
           <Button size="sm">
             <Plus className="h-4 w-4" />
             Create Document
@@ -56,7 +56,7 @@ export default function EventsPage() {
               <FileText className="h-10 w-10 text-slate-300 mb-3" />
               <p className="text-sm font-medium text-[var(--foreground)]">No documents yet</p>
               <p className="text-xs text-[var(--muted-foreground)] mt-1">Create your first travel document to see it here.</p>
-              <Link href="/tools/hotel-voucher" className="mt-4">
+              <Link href="/dashboard/vouchers/new" className="mt-4">
                 <Button size="sm">
                   <Plus className="h-4 w-4" />
                   Create a document

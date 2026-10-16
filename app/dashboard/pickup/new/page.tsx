@@ -33,6 +33,7 @@ import {
 } from "@/lib/agent/documents";
 import type { DocumentSummary } from "@/lib/agent/types";
 import { FormSkeleton } from "@/components/agent/skeletons";
+import { LivePreview } from "@/components/agent/LivePreview";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -126,7 +127,7 @@ export default function PickupEditorPage() {
         </p>
       ) : null}
 
-      <div className="grid gap-5 xl:grid-cols-[1fr_320px]">
+      <div className="grid gap-5 xl:grid-cols-[1fr_380px]">
         <div className="space-y-5">
           <SectionCard title="Guest Details" description="Who is travelling" icon={UserRound}>
             <div className="grid gap-4 md:grid-cols-[130px_1fr_auto]">
@@ -245,7 +246,8 @@ export default function PickupEditorPage() {
           </SectionCard>
         </div>
 
-        <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start" aria-label="Pickup Voucher Actions">
+        {/* Sticky on wide screens; scrolls on its own when the panel is taller than the window. */}
+        <aside className="space-y-4 xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto xl:pb-2" aria-label="Pickup Voucher Actions">
           <div className="rounded-3xl border border-slate-200 bg-white p-5">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-slate-900">Pickup Voucher</p>
@@ -267,6 +269,8 @@ export default function PickupEditorPage() {
               </div>
             </div>
           </div>
+
+          <LivePreview kind="pickup_voucher" data={data} />
 
           <div className="rounded-3xl border border-slate-200 bg-white p-5">
             <p className="text-sm font-semibold text-slate-900">PDF Layout</p>

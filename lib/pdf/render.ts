@@ -1,9 +1,10 @@
 import type { Agent, DocumentKind, PlanId } from "@/lib/agent/types";
-import type { AirTicketData, HotelVoucherData, InvoiceData, PickupVoucherData } from "@/lib/agent/documents";
+import type { AirTicketData, HotelVoucherData, InvoiceData, ItineraryData, PickupVoucherData } from "@/lib/agent/documents";
 import { renderHotelVoucher } from "./hotelVoucher";
 import { renderAirTicket } from "./airTicket";
 import { renderPickupVoucher } from "./pickupVoucher";
 import { renderInvoice } from "./invoice";
+import { renderItinerary } from "./itinerary";
 
 /** Server-rendered PDFs. Welcome placards are drawn in the browser (custom fonts). */
 export async function renderDocumentPdf(
@@ -20,6 +21,8 @@ export async function renderDocumentPdf(
       return renderAirTicket(data as unknown as AirTicketData, agent, plan);
     case "pickup_voucher":
       return renderPickupVoucher(data as unknown as PickupVoucherData, agent, plan);
+    case "itinerary":
+      return renderItinerary(data as unknown as ItineraryData, agent, plan);
     case "invoice":
     case "proforma":
     case "receipt":
@@ -38,6 +41,7 @@ export function pdfFileName(kind: DocumentKind, number: string | undefined, titl
     invoice: "Invoice",
     proforma: "Proforma_Invoice",
     receipt: "Receipt",
+    itinerary: "Itinerary",
   };
   const tag = (number || title).replace(/[^a-zA-Z0-9-_]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 60);
   return `${base[kind]}_${tag || "document"}.pdf`;

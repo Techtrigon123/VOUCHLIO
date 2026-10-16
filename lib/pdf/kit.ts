@@ -367,13 +367,23 @@ export function numberedList(c: Ctx, lines: string[], size = 8) {
   c.y -= 4;
 }
 
-/** Diagonal Silver watermark + footer on every page. Call last. */
+/** Credit on free (Silver) documents: the diagonal watermark and the footer line. */
+export const FREE_PLAN_CREDIT = "Powered by Vouchlio";
+const BRAND_RED = rgb(0.9, 0.22, 0.27);
+
+/**
+ * Footer on every page, plus the free-plan branding. Call last.
+ * Silver: a light diagonal "Powered by Vouchlio" watermark and the same credit in the footer.
+ * Gold and Platinum: clean pages — no watermark and no Vouchlio credit.
+ */
 export async function finish(c: Ctx): Promise<Uint8Array> {
   const pages = c.pdf.getPages();
-  const mark = "Vouchlio  -  Silver";
+  const free = c.plan === "silver";
+  const mark = FREE_PLAN_CREDIT;
+  const size7 = (s: string, font = c.fonts.regular) => font.widthOfTextAtSize(s, 7);
   pages.forEach((p, i) => {
     const { width, height } = p.getSize();
-    if (c.plan === "silver") {
+    if (free) {
       const size = 34;
       const tw = c.fonts.bold.widthOfTextAtSize(mark, size);
       for (let k = -1; k <= 1; k++) {
@@ -388,11 +398,28 @@ export async function finish(c: Ctx): Promise<Uint8Array> {
         });
       }
     }
-    const footer = clean(c.footer || `Generated with Vouchlio for ${agencyName(c.agent)}`);
     p.drawLine({ start: { x: MARGIN, y: 32 }, end: { x: width - MARGIN, y: 32 }, thickness: 0.5, color: LINE });
-    p.drawText(footer, { x: MARGIN, y: 20, size: 7, font: c.fonts.regular, color: GREY });
+
+    // Right: "Powered by Vouchlio  |  Page 1 of 2" on Silver, just the page number on paid plans.
     const pn = `Page ${i + 1} of ${pages.length}`;
-    p.drawText(pn, { x: width - MARGIN - c.fonts.regular.widthOfTextAtSize(pn, 7), y: 20, size: 7, font: c.fonts.regular, color: GREY });
+    let rx = width - MARGIN - size7(pn);
+    p.drawText(pn, { x: rx, y: 20, size: 7, font: c.fonts.regular, color: GREY });
+    if (free) {
+      const sep = "  |  ";
+      rx -= size7(sep);
+      p.drawText(sep, { x: rx, y: 20, size: 7, font: c.fonts.regular, color: GREY });
+      rx -= size7(FREE_PLAN_CREDIT, c.fonts.bold);
+      p.drawText(FREE_PLAN_CREDIT, { x: rx, y: 20, size: 7, font: c.fonts.bold, color: BRAND_RED });
+    }
+
+    // Left: the document's own footer, shortened so it never runs into the right-hand text.
+    let footer = clean(c.footer || agencyName(c.agent));
+    const room = rx - MARGIN - 16;
+    if (size7(footer) > room) {
+      while (footer.length > 1 && size7(`${footer}...`) > room) footer = footer.slice(0, -1);
+      footer = `${footer.trimEnd()}...`;
+    }
+    p.drawText(footer, { x: MARGIN, y: 20, size: 7, font: c.fonts.regular, color: GREY });
   });
   return c.pdf.save();
 }

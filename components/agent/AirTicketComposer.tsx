@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAgent } from "./AgentProvider";
 import { ExtractUploader } from "./ExtractUploader";
+import { LivePreview } from "./LivePreview";
 import { Field, NativeSelect, PageHeader, PageShell, Segmented, TextArea, TextInput, primaryBtn, secondaryBtn } from "./ui";
 import { api } from "@/lib/agent/client";
 import {
@@ -454,6 +455,7 @@ export function AirTicketComposer({ editId }: { editId?: string }) {
                 </div>
               ))}
             </dl>
+            <LivePreview kind="air_ticket" data={{ ...data, crsPnr: data.crsPnr.toUpperCase(), airlinePnr: data.airlinePnr.toUpperCase() }} className="mx-auto w-full max-w-2xl" />
             <p className="text-xs text-slate-500">After saving you can download the PDF, email it, or share on WhatsApp.</p>
           </div>
         )}

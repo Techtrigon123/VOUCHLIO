@@ -16,6 +16,6 @@ export const cleanBody = (v: unknown, max: number) => String(v ?? "").trim().sli
 /** Writes before migration 0010 is run: a clear 503 instead of a stack trace. Returns null for other errors. */
 export function notReady(error: unknown) {
   return error instanceof Error && error.name === "SupportNotReadyError"
-    ? fail("Support tickets and callbacks aren't set up yet. Please use live chat for now.", 503, "SUPPORT_NOT_READY")
+    ? fail("Support tickets and callbacks aren't set up yet. Please use the Contact page for now.", 503, "SUPPORT_NOT_READY")
     : null;
 }

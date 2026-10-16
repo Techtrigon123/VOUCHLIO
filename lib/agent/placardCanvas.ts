@@ -312,8 +312,10 @@ export async function drawPlacard(canvas: HTMLCanvasElement, d: PlacardData, age
 
   frame(ctx, w, h, s);
 
-  // Silver PDFs carry a light watermark, same as the server-rendered documents.
-  if (agent.subscriptionPlan === "silver") {
+  // Free (Silver) placards carry the same branding as the server-rendered documents: a light
+  // diagonal "Powered by Vouchlio" watermark and the credit along the bottom. Gold and Platinum are
+  // clean. Uses the plan in effect now, so a lapsed paid plan counts as Silver.
+  if ((agent.subscription?.plan ?? agent.subscriptionPlan) === "silver") {
     ctx.save();
     ctx.translate(w / 2, h / 2);
     ctx.rotate(-Math.PI / 6);
@@ -321,7 +323,16 @@ export async function drawPlacard(canvas: HTMLCanvasElement, d: PlacardData, age
     ctx.fillStyle = "#0f172a";
     ctx.font = "800 96px Inter, Arial, sans-serif";
     ctx.textAlign = "center";
-    for (const dy of [-360, 0, 360]) ctx.fillText("Vouchlio  -  Silver", 0, dy);
+    for (const dy of [-360, 0, 360]) ctx.fillText("Powered by Vouchlio", 0, dy);
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = "#e63946";
+    ctx.font = "700 26px Inter, Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText("Powered by Vouchlio", w / 2, h - 28);
     ctx.restore();
   }
 }

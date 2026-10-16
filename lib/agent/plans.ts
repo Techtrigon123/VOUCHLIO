@@ -26,9 +26,9 @@ export const GRACE_DAYS: Record<BillingCycle, number> = { monthly: 2, yearly: 5 
 /** Silver (free) can create at most this many new documents per calendar month (India time). */
 export const FREE_MONTHLY_DOCUMENTS = 4;
 
-/** The 7 services, in display order. */
+/** The 8 services, in display order. */
 export const ALL_SERVICES: DocumentKind[] = [
-  "hotel_voucher", "invoice", "proforma", "receipt", "air_ticket", "pickup_voucher", "welcome_placard",
+  "hotel_voucher", "invoice", "proforma", "receipt", "air_ticket", "pickup_voucher", "welcome_placard", "itinerary",
 ];
 
 export const SERVICE_LABELS: Record<DocumentKind, string> = {
@@ -39,11 +39,12 @@ export const SERVICE_LABELS: Record<DocumentKind, string> = {
   air_ticket: "Air tickets",
   pickup_voucher: "Pickup vouchers",
   welcome_placard: "Welcome placards",
+  itinerary: "Itineraries",
 };
 
-/** Services open on each plan: Silver 3 of 7, Gold 4 of 7, Platinum all 7 (payment receipts are Platinum-only). */
+/** Services open on each plan: Silver 2 of 8, Gold 4 of 8 (adds proforma invoices and air tickets), Platinum all 8 (receipts, pickups, placards and itineraries are Platinum-only). */
 export const PLAN_SERVICES: Record<PlanId, readonly DocumentKind[]> = {
-  silver: ["hotel_voucher", "invoice", "proforma"],
+  silver: ["hotel_voucher", "invoice"],
   gold: ["hotel_voucher", "invoice", "proforma", "air_ticket"],
   platinum: ALL_SERVICES,
 };
@@ -130,6 +131,60 @@ export function effectivePlan(a: SubscriptionFields): PlanId {
   return subscriptionState(a).plan;
 }
 
+/** Paid agents start getting renewal reminders this many days before the plan ends. */
+export const RENEW_REMINDER_DAYS = 7;
+
+export interface RenewalReminder {
+  /** Same for every reminder of one stage of one plan period — used to send each stage once. */
+  key: string;
+  stage: "7d" | "3d" | "1d" | "grace" | "grace-last";
+  /** Ending today/tomorrow or in the grace period. */
+  urgent: boolean;
+  title: string;
+  body: string;
+  /** Opens checkout for the same plan and billing cycle. */
+  href: string;
+}
+
+const istDate = (iso: string) => new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
+const days = (n: number) => `${n} day${n === 1 ? "" : "s"}`;
+
+/**
+ * What to tell a paid agent about renewing, or null when nothing is due. Reminders run from
+ * RENEW_REMINDER_DAYS before the plan ends (stages at 7, 3 and 1 days left) through the grace period
+ * (GRACE_DAYS for the plan's cycle), with a last warning on the final grace day.
+ */
+export function renewalReminder(s: SubscriptionState): RenewalReminder | null {
+  if (!s.paidPlan || !s.cycle || !s.expiresAt || !s.graceEndsAt || s.daysLeft == null) return null;
+  const name = planName(s.paidPlan);
+  const href = `/dashboard/pricing?plan=${s.paidPlan}&cycle=${s.cycle}`;
+  const grace = GRACE_DAYS[s.cycle];
+  if (s.status === "active") {
+    if (s.daysLeft > RENEW_REMINDER_DAYS) return null;
+    const stage = s.daysLeft <= 1 ? "1d" : s.daysLeft <= 3 ? "3d" : "7d";
+    return {
+      key: `renew:${s.expiresAt}:${stage}`,
+      stage,
+      urgent: s.daysLeft <= 1,
+      title: s.daysLeft <= 1 ? `Your ${name} plan ends tomorrow` : `Your ${name} plan ends in ${days(s.daysLeft)}`,
+      body: `Renew before ${istDate(s.expiresAt)} to keep your ${name} features without a break. After that you have ${days(grace)} of grace to renew.`,
+      href,
+    };
+  }
+  if (s.status === "grace") {
+    const last = s.daysLeft <= 1;
+    return {
+      key: `renew:${s.expiresAt}:${last ? "grace-last" : "grace"}`,
+      stage: last ? "grace-last" : "grace",
+      urgent: true,
+      title: last ? `Last day to renew ${name}` : `Your ${name} plan has ended — ${days(s.daysLeft)} of grace left`,
+      body: `Your ${name} features keep working until ${istDate(s.graceEndsAt)}. Renew before then, or your account moves to the free Silver plan.`,
+      href,
+    };
+  }
+  return null;
+}
+
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000; // India: UTC+5:30, no daylight saving
 
 /** Start of the current free-allowance month: the 1st at 00:00 India time. */
@@ -208,7 +263,7 @@ export const PLANS: PlanDefinition[] = [
     cta: "Get started free",
     subscriptionNote: "No credit card · upgrade anytime",
     highlights: [
-      { value: "3 of 7", label: "Services" },
+      { value: "2 of 8", label: "Services" },
       { value: `${FREE_MONTHLY_DOCUMENTS}/month`, label: "New documents" },
       { value: "30 days", label: "History saved" },
     ],
@@ -218,13 +273,13 @@ export const PLANS: PlanDefinition[] = [
   {
     id: "gold",
     name: "Gold",
-    headline: "Add air tickets. Clean PDFs with your logo.",
+    headline: "Add proforma invoices and air tickets. Clean PDFs with your logo.",
     prices: PLAN_PRICES_INR.gold,
     cta: "Choose Gold",
     featured: true,
     badge: "Popular",
     highlights: [
-      { value: "4 of 7", label: "Services" },
+      { value: "4 of 8", label: "Services" },
       { value: "Unlimited", label: "New documents" },
       { value: "Forever", label: "Document history" },
     ],
@@ -240,7 +295,7 @@ export const PLANS: PlanDefinition[] = [
     badge: "Everything",
     subscriptionNote: "Your design is never shared with other agents",
     highlights: [
-      { value: "7 of 7", label: "Services" },
+      { value: "8 of 8", label: "Services" },
       { value: "Unlimited", label: "Upload fills" },
       { value: "Custom", label: "Voucher design" },
     ],
@@ -264,6 +319,7 @@ export const PLAN_COMPARISON: { label: string; silver: boolean | string; gold: b
   serviceRow("Air tickets", "air_ticket"),
   serviceRow("Pickup vouchers", "pickup_voucher"),
   serviceRow("Welcome placards", "welcome_placard"),
+  serviceRow("Itinerary builder", "itinerary"),
   { label: "New documents", silver: `${FREE_MONTHLY_DOCUMENTS} / month`, gold: "Unlimited", platinum: "Unlimited" },
   { label: "Document history", silver: `${SILVER_RETENTION_DAYS} days`, gold: "Forever", platinum: "Forever" },
   { label: "Upload to auto-fill", silver: `${EXTRACT_LIMITS.silverVoucherPerDay}/day (hotel)`, gold: `${EXTRACT_LIMITS.goldPerYear} / year`, platinum: "Unlimited" },
@@ -283,15 +339,15 @@ const price = (plan: PaidPlanId, prices: PriceTable = PLAN_PRICES_INR) =>
 export const pricingFaq = (prices: PriceTable = PLAN_PRICES_INR) => [
   {
     q: "What is included in the Silver plan?",
-    a: `Silver is free and opens 3 of the 7 services: hotel vouchers, invoices and proforma invoices. You can create up to ${FREE_MONTHLY_DOCUMENTS} new documents each calendar month (the count resets on the 1st, India time); editing a saved document doesn't count. History is kept for ${SILVER_RETENTION_DAYS} days and PDFs carry a watermark.`,
+    a: `Silver is free and opens 2 of the 8 services: hotel vouchers and tax invoices. You can create up to ${FREE_MONTHLY_DOCUMENTS} new documents each calendar month (the count resets on the 1st, India time); editing a saved document doesn't count. History is kept for ${SILVER_RETENTION_DAYS} days and PDFs carry a watermark.`,
   },
   {
     q: "What does Gold add?",
-    a: `Gold (${price("gold", prices)}, GST inclusive) opens air tickets as a fourth service, removes the monthly document limit and the watermark, adds your logo, keeps history forever and includes ${EXTRACT_LIMITS.goldPerYear} upload auto-fills a year.`,
+    a: `Gold (${price("gold", prices)}, GST inclusive) adds proforma invoices and air tickets, removes the monthly document limit and the watermark, adds your logo, keeps history forever and includes ${EXTRACT_LIMITS.goldPerYear} upload auto-fills a year.`,
   },
   {
     q: "What does Platinum add?",
-    a: `Platinum (${price("platinum", prices)}, GST inclusive) opens all 7 services — including payment receipts, pickup vouchers and welcome placards — with unlimited upload auto-fill and vouchers designed only for your agency.`,
+    a: `Platinum (${price("platinum", prices)}, GST inclusive) opens all 8 services — including the itinerary builder, payment receipts, pickup vouchers and welcome placards — with unlimited upload auto-fill and vouchers designed only for your agency.`,
   },
   {
     q: "Monthly or yearly — what's the difference?",

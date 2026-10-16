@@ -8,6 +8,7 @@ import { DocumentAccessProvider } from "@/components/agent/DocumentAccessWarning
 import AgentNavbar from "@/components/agent/AgentNavbar";
 import AppFooter from "@/components/layout/AppFooter";
 import UpgradePopup from "@/components/agent/UpgradePopup";
+import RenewalPopup from "@/components/agent/RenewalPopup";
 import { DashboardSkeleton, PageBodySkeleton } from "@/components/agent/skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { needsQuickSetup } from "@/lib/agent/profile";
@@ -40,6 +41,7 @@ function Gate({ children }: { children: React.ReactNode }) {
             <AgentNavbar />
           </Suspense>
           <UpgradePopup />
+          <RenewalPopup />
           <main className="pb-28 transition-[padding] duration-200 lg:pl-[var(--sidebar-w,16rem)]">
             <Suspense fallback={<PageBodySkeleton />}>{children}</Suspense>
           </main>

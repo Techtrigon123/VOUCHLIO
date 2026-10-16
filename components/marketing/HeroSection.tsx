@@ -168,7 +168,7 @@ export default function HeroSection() {
           Travel documents, <span className="text-brand-neon">simplified.</span>
         </h1>
         <p className="mb-10 max-w-xl text-lg leading-relaxed text-neutral-300">
-          Create branded hotel vouchers, e-tickets, pickup vouchers, welcome placards and GST invoices — and download them as
+          Create branded hotel vouchers, e-tickets, itineraries, pickup vouchers, welcome placards and GST invoices — and download them as
           polished PDFs in seconds.
         </p>
         <div className="mb-12 flex flex-col items-start gap-4 sm:flex-row sm:items-center">

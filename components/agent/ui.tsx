@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
+  CheckCircle2,
+  Circle,
   Eye,
   Loader2,
   Lock,
@@ -55,6 +57,46 @@ export function PageHeader({
         {description ? <p className={cn("mt-1 max-w-2xl text-sm text-slate-500", indent)}>{description}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+    </div>
+  );
+}
+
+/**
+ * "3 of 6 done" checklist for long forms: a progress bar plus one row per required step. Each row
+ * jumps to its section (give the SectionCard a matching `id`), so agents always see what's left.
+ */
+export function FormProgress({ steps }: { steps: { label: string; done: boolean; target: string }[] }) {
+  const done = steps.filter((s) => s.done).length;
+  const complete = done === steps.length;
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-5">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-sm font-semibold text-slate-900">{complete ? "Ready to generate" : "Your progress"}</p>
+        <p className={cn("text-xs font-semibold tabular-nums", complete ? "text-emerald-600" : "text-slate-500")}>
+          {done} of {steps.length} done
+        </p>
+      </div>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={done} aria-label="Required steps completed">
+        <div
+          className={cn("h-full rounded-full transition-[width] duration-500 ease-out", complete ? "bg-emerald-500" : "bg-brand-500")}
+          style={{ width: `${(done / steps.length) * 100}%` }}
+        />
+      </div>
+      <ul className="mt-3 space-y-0.5">
+        {steps.map((s) => (
+          <li key={s.label}>
+            <button
+              type="button"
+              onClick={() => document.getElementById(s.target)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition hover:bg-slate-50"
+            >
+              {s.done ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" /> : <Circle className="h-4 w-4 shrink-0 text-slate-300" />}
+              <span className={cn("flex-1", s.done ? "text-slate-500" : "font-medium text-slate-900")}>{s.label}</span>
+              {s.done ? null : <span className="text-[11px] font-medium text-brand-600">Fill in</span>}
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -128,11 +170,14 @@ export function Field({
   );
 }
 
-/** Native inputs styled for the panel; tinted once they hold a value (as in the reference form). */
+/**
+ * Native inputs styled for the panel: grey while empty, white once they hold a value. Filled boxes
+ * stay neutral on purpose — red is kept for focus and errors, so a filled field never looks wrong.
+ */
 export const inputClass = (filled?: boolean, invalid?: boolean) =>
   cn(
     "h-10 w-full rounded-xl border px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 disabled:cursor-not-allowed disabled:opacity-60",
-    filled ? "border-brand-200 bg-brand-50/40" : "border-slate-200 bg-slate-50",
+    filled ? "border-slate-300 bg-white" : "border-slate-200 bg-slate-50",
     invalid && "border-rose-300 bg-rose-50/40 focus:border-rose-400 focus:ring-rose-100"
   );
 

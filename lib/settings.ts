@@ -12,7 +12,6 @@ export type Prices = { gold: { monthly: number; yearly: number }; platinum: { mo
 
 /** Support channels agents can use, switched on/off in Vouchlio Admin → Settings → Support. */
 export interface SupportSettings {
-  liveChat: boolean;
   tickets: boolean;
   bugReports: boolean;
   callbacks: boolean;
@@ -21,7 +20,6 @@ export interface SupportSettings {
 }
 
 export const DEFAULT_SUPPORT: SupportSettings = {
-  liveChat: true,
   tickets: true,
   bugReports: true,
   callbacks: true,
@@ -63,7 +61,6 @@ function build(rows: Map<string, Record<string, unknown>>): AppSettings {
       manualUpi: pay.manualUpi !== false,
     },
     support: {
-      liveChat: flag("liveChat"),
       tickets: flag("tickets"),
       bugReports: flag("bugReports"),
       callbacks: flag("callbacks"),

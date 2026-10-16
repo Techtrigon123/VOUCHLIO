@@ -3,14 +3,15 @@ import { cn } from "@/lib/utils";
 
 /**
  * The Vouchlio "V" ticket mark. Size it by height (e.g. `h-8`); it is square.
- * `auto` follows the site theme: black ticket in light mode, neon ticket in dark mode
- * (switched in globals.css so there is no flash before hydration).
- * `neon` always shows the neon ticket — use it on surfaces that are dark in both themes.
+ * `auto`: the red ticket in light and dark mode, switching to the white ticket on red (`.on-accent`)
+ * surfaces so it stays visible (switched in globals.css, so there is no flash before hydration).
+ * `neon`: always the red ticket — for surfaces that are dark in both themes, like the footer.
  */
 export default function BrandMark({ className, variant = "auto" }: { className?: string; variant?: "auto" | "neon" }) {
   const base = cn("h-8 w-auto shrink-0", className);
+  // Dark surfaces (the black footer) use the red ticket too — it reads well on black.
   if (variant === "neon") {
-    return <img src="/brand/vouchlio-mark-light.svg" alt="" aria-hidden="true" className={base} />;
+    return <img src="/brand/vouchlio-mark.svg" alt="" aria-hidden="true" className={base} />;
   }
   return (
     <>

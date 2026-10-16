@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import AuthLogo from "@/components/auth/AuthLogo";
 import { OFFER_FLAG } from "@/components/agent/UpgradePopup";
+import { clearApiCache } from "@/lib/agent/client";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const loginSchema = z.object({
@@ -71,6 +72,8 @@ export default function LoginForm() {
         return;
       }
 
+      // Drop any data cached for a previous session in this tab.
+      clearApiCache();
       toast.success("Welcome back!");
       // Show the plan offer once, on the first dashboard screen after signing in.
       try {

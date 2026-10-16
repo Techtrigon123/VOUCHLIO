@@ -431,26 +431,6 @@ export async function countNewDocumentsSince(agentId: string, since: Date): Prom
   return count ?? 0;
 }
 
-/* ─── support messages ───────────────────────────────────────────────────── */
-
-export interface SupportMessageRecord {
-  id: string;
-  agentId: string;
-  from: "agent" | "support";
-  body: string;
-  createdAt: Date;
-}
-
-export async function listSupportMessages(agentId: string): Promise<SupportMessageRecord[]> {
-  const rows = check(await db().from("support_messages").select("*").eq("agent_id", agentId).order("created_at", { ascending: true }).limit(300));
-  return (rows as Record<string, unknown>[]).map((r) => fromRow<SupportMessageRecord>(r)!);
-}
-
-export async function createSupportMessage(agentId: string, body: string): Promise<SupportMessageRecord> {
-  const row = check(await db().from("support_messages").insert({ agent_id: agentId, from: "agent", body }).select("*").single());
-  return fromRow<SupportMessageRecord>(row as Record<string, unknown>)!;
-}
-
 /* ─── contact messages (public Contact page) ─────────────────────────────── */
 
 export async function createContactMessage(input: {

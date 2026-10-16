@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { BedDouble, Car, ChevronLeft, ChevronRight, FileText, Landmark, Pause, Play, Plane, ReceiptText, Signpost, UploadCloud, type LucideIcon } from "lucide-react";
+import { BedDouble, Car, ChevronLeft, ChevronRight, FileText, Landmark, Pause, Play, Plane, ReceiptText, Route, Signpost, UploadCloud, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /*
@@ -22,14 +22,15 @@ interface Slide {
 const img = (id: string) => `https://images.unsplash.com/${id}?w=1800&q=72&auto=format&fit=crop`;
 
 const SLIDES: Slide[] = [
-  { title: "Hotel Vouchers", category: "Stay", tagline: "Guest, room, meal plan and booking reference on one branded page", icon: BedDouble, image: img("photo-1566073771259-6a8506099945") },
-  { title: "Air Tickets", category: "Flights", tagline: "Offline e-tickets with PNR, ticket numbers, baggage and fare", icon: Plane, image: img("photo-1436491865332-7a61a109cc05") },
-  { title: "Pickup Vouchers", category: "Transfers", tagline: "Driver, vehicle, pickup time and drop — clear for everyone", icon: Car, image: img("photo-1449965408869-eaa3f722e40d") },
-  { title: "Welcome Placards", category: "Arrivals", tagline: "Airport and hotel boards with your guest's name and your brand", icon: Signpost, image: img("photo-1517400508447-f8dd518b86db") },
-  { title: "GST Invoices", category: "Billing", tagline: "CGST, SGST and IGST worked out for you, with payments tracked", icon: Landmark, image: img("photo-1450101499163-c8848c66ca85") },
-  { title: "Proforma Invoices", category: "Quotes", tagline: "Priced quotations your customer approves before paying", icon: FileText, image: img("photo-1554224155-8d04cb21cd6c") },
-  { title: "Payment Receipts", category: "Payments", tagline: "Proof of every payment, linked to its invoice", icon: ReceiptText, image: img("photo-1579621970563-ebec7560ff3e") },
-  { title: "Upload Auto-fill", category: "Automation", tagline: "Drop in a voucher or e-ticket and the form fills itself", icon: UploadCloud, image: img("photo-1460925895917-afdab827c52f") },
+  { title: "Hotel Vouchers", category: "Stay", tagline: "Guest, room, meal plan and booking reference on one branded page", icon: BedDouble, image: img("photo-1520250497591-112f2f40a3f4") },
+  { title: "Air Tickets", category: "Flights", tagline: "Offline e-tickets with PNR, ticket numbers, baggage and fare", icon: Plane, image: img("photo-1474302770737-173ee21bab63") },
+  { title: "Pickup Vouchers", category: "Transfers", tagline: "Driver, vehicle, pickup time and drop — clear for everyone", icon: Car, image: img("photo-1544620347-c4fd4a3d5957") },
+  { title: "Itinerary Builder", category: "Trip plans", tagline: "Day-by-day plans with stays, meals, inclusions and price", icon: Route, image: img("photo-1469854523086-cc02fe5d8800") },
+  { title: "Welcome Placards", category: "Arrivals", tagline: "Airport and hotel boards with your guest's name and your brand", icon: Signpost, image: img("photo-1530521954074-e64f6810b32d") },
+  { title: "GST Invoices", category: "Billing", tagline: "CGST, SGST and IGST worked out for you, with payments tracked", icon: Landmark, image: img("photo-1517245386807-bb43f82c33c4") },
+  { title: "Proforma Invoices", category: "Quotes", tagline: "Priced quotations your customer approves before paying", icon: FileText, image: img("photo-1586281380349-632531db7ed4") },
+  { title: "Payment Receipts", category: "Payments", tagline: "Proof of every payment, linked to its invoice", icon: ReceiptText, image: img("photo-1556742049-0cfed4f6a45d") },
+  { title: "Upload Auto-fill", category: "Automation", tagline: "Drop in a voucher or e-ticket and the form fills itself", icon: UploadCloud, image: img("photo-1499951360447-b19be8fe80f5") },
 ];
 
 /** Time each slide stays before the next one slides in. */

@@ -3,7 +3,7 @@ export const faqs = [
   {
     question: "What documents can I create?",
     answer:
-      "You can generate hotel vouchers, airline tickets, pickup vouchers, welcome placards, invoices, proforma invoices and payment receipts — all as branded, print-ready PDFs.",
+      "You can generate hotel vouchers, airline tickets, pickup vouchers, welcome placards, day-by-day travel itineraries, invoices, proforma invoices and payment receipts — all as branded, print-ready PDFs.",
   },
   {
     question: "Can I customize the hotel voucher template?",

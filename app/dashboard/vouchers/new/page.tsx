@@ -25,6 +25,7 @@ import { ExtractUploader } from "@/components/agent/ExtractUploader";
 import { LogoPromptDialog } from "@/components/agent/LogoPromptDialog";
 import {
   Field,
+  FormProgress,
   NativeSelect,
   PageHeader,
   PageShell,
@@ -48,6 +49,7 @@ import {
   defaultHotelVoucher,
   newRoom,
   nights,
+  resolvedRooms,
   num,
   validateHotelVoucher,
   voucherFare,
@@ -59,6 +61,7 @@ import {
 import type { ExtractedVoucher } from "@/lib/agent/extract";
 import type { DocumentSummary } from "@/lib/agent/types";
 import { FormSkeleton } from "@/components/agent/skeletons";
+import { LivePreview } from "@/components/agent/LivePreview";
 
 interface Suggestion {
   name: string;
@@ -404,6 +407,23 @@ export default function VoucherEditorPage() {
   const fare = useMemo(() => voucherFare(data), [data]);
   const stayNights = nights(data.checkIn, data.checkOut);
 
+  // Same rules as validateHotelVoucher, grouped by section, so the checklist matches what Save needs.
+  const progress = useMemo(() => {
+    const has = (v: string) => !!v.trim();
+    const rooms = resolvedRooms(data);
+    const roomsNamed = data.sameRoomType ? has(rooms[0]?.roomName ?? "") : rooms.every((r) => has(r.roomName));
+    const datesOk = !!data.checkIn && !!data.checkOut && new Date(data.checkOut) > new Date(data.checkIn) && (data.sameDates || rooms.every((r) => r.checkIn && r.checkOut));
+    const agesOk = data.rooms.every((r) => r.childAges.slice(0, r.children).length === r.children && r.childAges.slice(0, r.children).every((a) => a !== ""));
+    return [
+      { label: "Hotel & city", done: has(data.hotelName) && has(data.city), target: "voucher-property" },
+      { label: "Booking references", done: has(data.bookingRef) && has(data.hcn), target: "voucher-refs" },
+      { label: "Dates & rooms", done: datesOk && roomsNamed && agesOk, target: "voucher-stay" },
+      { label: "Lead guest", done: has(data.guestFirstName) && has(data.guestLastName), target: "voucher-guest" },
+      { label: "Fare", done: data.fareMode === "hide" || (data.fareMode === "breakdown" ? num(data.baseFare) + num(data.taxes) : num(data.total)) > 0, target: "voucher-fare" },
+      { label: "Your name", done: has(data.preparedBy), target: "voucher-generate" },
+    ];
+  }, [data]);
+
   const setRoom = (i: number, r: VoucherRoom) => setData((d) => ({ ...d, rooms: d.rooms.map((x, j) => (j === i ? r : x)) }));
 
   const persist = async (generatePdf: boolean): Promise<string | null> => {
@@ -469,10 +489,10 @@ export default function VoucherEditorPage() {
         back={{ href: "/dashboard/vouchers", label: "Back to your voucher PDFs" }}
         eyebrow="Hotel voucher"
         title={docId ? "Edit voucher" : "Voucher form"}
-        description="Gray boxes are empty — type there. Tinted boxes already have a value. Required fields use *."
+        description="Upload a booking to fill the form for you, or type in the grey boxes. The checklist shows what's left — required fields use *."
       />
 
-      <div className="grid gap-5 xl:grid-cols-[1fr_340px]">
+      <div className="grid gap-5 xl:grid-cols-[1fr_380px]">
         <div className="space-y-5">
           <ExtractUploader<ExtractedVoucher>
             type="voucher"
@@ -487,7 +507,7 @@ export default function VoucherEditorPage() {
             }}
           />
 
-          <SectionCard title="Property" icon={Building2}>
+          <SectionCard id="voucher-property" title="Property" icon={Building2}>
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Hotel name" htmlFor="hotelName" required className="md:col-span-2" hint="Suggestions are optional. Choosing one fills name, address and contact details from your earlier vouchers.">
                 <HotelNameInput
@@ -514,7 +534,7 @@ export default function VoucherEditorPage() {
             </div>
           </SectionCard>
 
-          <SectionCard title="Booking references" icon={Hash}>
+          <SectionCard id="voucher-refs" title="Booking references" icon={Hash}>
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Your reference / booking ID" required hint="Use your platform booking ID or any internal reference.">
                 <TextInput value={data.bookingRef} onChange={(e) => patch({ bookingRef: e.target.value })} placeholder="e.g. TD-20260409-01" />
@@ -525,7 +545,7 @@ export default function VoucherEditorPage() {
             </div>
           </SectionCard>
 
-          <SectionCard title="Stay & guests" description="Adults, children, ages. Add rooms side by side; new rooms appear below. Fare is in the Fare section." icon={CalendarRange}>
+          <SectionCard id="voucher-stay" title="Stay & guests" description="Adults, children, ages. Add rooms side by side; new rooms appear below. Fare is in the Fare section." icon={CalendarRange}>
             <div className="grid gap-4 md:grid-cols-4">
               <Field label="Check-in" required>
                 <TextInput type="date" value={data.checkIn} onChange={(e) => patch({ checkIn: e.target.value })} />
@@ -579,7 +599,7 @@ export default function VoucherEditorPage() {
             </button>
           </SectionCard>
 
-          <SectionCard title="Lead guest" icon={UserRound}>
+          <SectionCard id="voucher-guest" title="Lead guest" icon={UserRound}>
             <div className="grid gap-4 md:grid-cols-[140px_1fr_1fr]">
               <Field label="Title" hint="Optional">
                 <NativeSelect value={data.guestTitle} onChange={(v) => patch({ guestTitle: v })} options={GUEST_TITLES} placeholder="Choose title" />
@@ -631,7 +651,7 @@ export default function VoucherEditorPage() {
             </details>
           </SectionCard>
 
-          <SectionCard title="Fare on PDF" description="Choose what guests see, then pick a currency and enter amounts." icon={IndianRupee}>
+          <SectionCard id="voucher-fare" title="Fare on PDF" description="Choose what guests see, then pick a currency and enter amounts." icon={IndianRupee}>
             <Segmented<FareMode> value={data.fareMode} onChange={(v) => patch({ fareMode: v })} options={FARE_MODES.map((m) => ({ value: m.id, label: m.label, hint: m.hint }))} />
             {data.fareMode !== "hide" ? (
               <div className="mt-4 grid gap-4 md:grid-cols-4">
@@ -719,7 +739,10 @@ export default function VoucherEditorPage() {
         </div>
 
         {/* Summary + generate */}
-        <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start" aria-label="Voucher summary and generate PDF">
+        {/* Sticky on wide screens; scrolls on its own when the panel is taller than the window. */}
+        <aside className="space-y-4 xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto xl:pb-2" aria-label="Voucher summary and generate PDF">
+          <FormProgress steps={progress} />
+          <LivePreview kind="hotel_voucher" data={data} />
           <div className="rounded-3xl border border-slate-200 bg-white p-5">
             <p className="text-sm font-semibold text-slate-900">Voucher summary</p>
             <dl className="mt-3 space-y-2 text-sm">
@@ -740,7 +763,7 @@ export default function VoucherEditorPage() {
             </dl>
           </div>
 
-          <div className="rounded-3xl border border-brand-200 bg-white p-5">
+          <div id="voucher-generate" className="scroll-mt-28 rounded-3xl border border-brand-200 bg-white p-5">
             <Field label="Who is preparing this voucher?" htmlFor="preparedBy" required hint="Enter your name. It will appear on the PDF and in your saved voucher history.">
               <TextInput id="preparedBy" value={data.preparedBy} onChange={(e) => patch({ preparedBy: e.target.value })} placeholder="Your name" />
             </Field>

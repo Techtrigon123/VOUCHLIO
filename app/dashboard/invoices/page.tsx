@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FileSpreadsheet, FileText, Plus, Receipt, Upload, Wallet } from "lucide-react";
+import { FileSpreadsheet, FileText, Lock, Plus, Receipt, Upload, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useDocuments } from "@/components/agent/useDocuments";
@@ -12,6 +12,8 @@ import { ExportDialog, RecordPaymentDialog, type NumberInfo } from "@/components
 import { AccessBadge, ConfirmDialog, EmptyState, PageHeader, PageShell, RowActions, iconBtn, primaryBtn, secondaryBtn } from "@/components/agent/ui";
 import { api, formatDay, openPdf, sharePdfOnWhatsApp } from "@/lib/agent/client";
 import { INVOICE_LABELS, type InvoiceKind } from "@/lib/agent/documents";
+import { effectivePlan, lowestPlanFor, planIncludes, planName } from "@/lib/agent/plans";
+import { useAgent } from "@/components/agent/AgentProvider";
 import type { DocumentSummary } from "@/lib/agent/types";
 import { ListSkeleton } from "@/components/agent/skeletons";
 
@@ -30,7 +32,12 @@ export default function InvoicesPage() {
   const kind: InvoiceKind = isKind(params.get("type")) ? (params.get("type") as InvoiceKind) : "invoice";
   const editId = params.get("id");
   const isNew = params.get("new") === "1";
-  const showForm = isNew || !!editId;
+  const { agent } = useAgent();
+  const plan = agent ? effectivePlan(agent) : "silver";
+  /** Plans that don't include a type (proforma needs Gold, receipts Platinum) see an upgrade card instead of the form. */
+  const lockedKind = (k: InvoiceKind) => !!agent && !planIncludes(plan, k);
+  const locked = lockedKind(kind);
+  const showForm = !locked && (isNew || !!editId);
 
   const { docs, error, reload } = useDocuments(kind);
   const [toDelete, setToDelete] = useState<DocumentSummary | null>(null);
@@ -96,11 +103,29 @@ export default function InvoicesPage() {
             className={cn("inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition", kind === t.kind ? "bg-white text-brand-600 shadow-sm ring-1 ring-brand-200" : "text-slate-600 hover:text-slate-900")}
           >
             <t.icon className="h-4 w-4" /> {t.label}
+            {lockedKind(t.kind) ? (
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-200/70 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500" title={`Needs the ${planName(lowestPlanFor(t.kind))} plan`}>
+                <Lock className="h-3 w-3" /> {planName(lowestPlanFor(t.kind))}
+              </span>
+            ) : null}
           </button>
         ))}
       </div>
 
-      {showForm ? (
+      {locked ? (
+        <div className="rounded-3xl border border-brand-200 bg-white p-8 text-center">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+            <Lock className="h-5 w-5" />
+          </span>
+          <h2 className="mt-4 text-lg font-bold text-slate-900">{labels.plural} are on the {lowestPlanFor(kind) === "gold" ? "Gold and Platinum plans" : "Platinum plan"}</h2>
+          <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
+            {kind === "proforma" ? "Send priced quotations your customers approve before paying." : "Give customers proof of every payment, linked to its invoice."} Upgrade to unlock {labels.plural.toLowerCase()}.
+          </p>
+          <Link href={`/dashboard/pricing?plan=${lowestPlanFor(kind)}`} className={cn(primaryBtn, "mt-5")}>
+            Upgrade to {planName(lowestPlanFor(kind))}
+          </Link>
+        </div>
+      ) : showForm ? (
         <InvoiceForm
           key={`${kind}-${editId ?? "new"}`}
           kind={kind}
