@@ -12,7 +12,7 @@ export type BillingCycle = "monthly" | "yearly";
  * TODO: the MONTHLY prices are placeholders — replace them with your real prices before launch.
  */
 export const PLAN_PRICES_INR = {
-  gold: { monthly: 199, yearly: 1999 },
+  gold: { monthly: 299, yearly: 1999 },
   platinum: { monthly: 699, yearly: 6999 },
 } as const;
 
