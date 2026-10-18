@@ -3,9 +3,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, Download, ImageDown, Loader2, Printer, RotateCcw, Signpost } from "lucide-react";
+import { Check, ChevronDown, Download, ImageDown, Loader2, Printer, RotateCcw, Signpost } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { EditorLayout, PreviewPanel } from "@/components/agent/editor";
 import { useAgent } from "@/components/agent/AgentProvider";
 import { Field, NativeSelect, PageHeader, PageShell, SectionCard, TextInput, primaryBtn, secondaryBtn, useFeatureGate } from "@/components/agent/ui";
 import { api, saveBlob } from "@/lib/agent/client";
@@ -58,11 +59,16 @@ export default function PlacardEditorPage() {
     });
   }, [editId, router]);
 
-  // Live preview (debounced so typing stays smooth).
+  // Live preview (debounced so typing stays smooth). A draw that's overtaken by newer typing is dropped.
   useEffect(() => {
     if (!agent || !canvasRef.current) return;
-    const t = window.setTimeout(() => void drawPlacard(canvasRef.current!, data, agent), 120);
-    return () => window.clearTimeout(t);
+    let stale = false;
+    const canvas = canvasRef.current;
+    const t = window.setTimeout(() => void drawPlacard(canvas, data, agent, () => stale).catch(() => undefined), 120);
+    return () => {
+      stale = true;
+      window.clearTimeout(t);
+    };
   }, [data, agent, loading]);
 
   if (!enabled) return null;
@@ -133,29 +139,30 @@ export default function PlacardEditorPage() {
   const print = async () => {
     if (!canDownload) return void toast.error(DOWNLOAD_BLOCKED_MESSAGE);
     const win = window.open("", "_blank");
+    if (!win) return void toast.error("Your browser blocked the print tab. Allow pop-ups for this site and try again.");
     setBusy("print");
     const wasEdit = !!editId;
     if (await save()) {
       try {
         const url = URL.createObjectURL(await placardPdf(data, agent));
-        if (win) win.location.href = url;
+        win.location.href = url;
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
         toast.success(wasEdit ? "New version saved — opened for print" : "PDF saved — opened for print");
       } catch {
-        win?.close();
+        win.close();
         toast.error("Print preview failed");
       }
-    } else win?.close();
+    } else win.close();
     setBusy(null);
   };
 
   const landscape = isLandscape(data.theme);
 
   return (
-    <PageShell wide>
+    <PageShell full>
       <PageHeader
         back={{ href: "/dashboard/placards", label: "Back to saved welcome placards" }}
-        eyebrow="Welcome placard"
-        title={editId ? "Edit Welcome Placard" : "New Welcome Placard"}
+        title={editId ? "Edit welcome placard" : "New welcome placard"}
         description={
           editId
             ? `Update this board and save to create version ${(version ?? 1) + 1}. Your earlier PDF stays in the list.`
@@ -176,8 +183,16 @@ export default function PlacardEditorPage() {
         }
       />
 
-      <div className="grid gap-5 xl:grid-cols-[420px_1fr]">
-        <div className="space-y-5">
+      <EditorLayout
+        preview={
+          <PreviewPanel meta={landscape ? "A4 landscape · print-ready" : "A4 portrait · print-ready"}>
+            <div className={cn("mx-auto overflow-hidden rounded-md bg-white shadow-[0_10px_30px_rgba(15,23,42,0.12)] ring-1 ring-slate-200", landscape ? "max-w-full" : "max-w-[620px]")}>
+              <canvas ref={canvasRef} aria-label="Welcome placard preview" role="img" className="block h-auto w-full" />
+            </div>
+          </PreviewPanel>
+        }
+        form={
+        <>
           <SectionCard title="Board details" icon={Signpost}>
             <div className="grid gap-4">
               <div className="grid grid-cols-[130px_1fr] gap-3">
@@ -208,13 +223,31 @@ export default function PlacardEditorPage() {
           </SectionCard>
 
           <SectionCard title="Premium theme">
-            <div className="grid grid-cols-2 gap-2">
-              {PLACARD_THEMES.map((t) => (
-                <button key={t.id} type="button" onClick={() => patch({ theme: t.id, custom: {} })} className={cn("rounded-2xl border px-3 py-2.5 text-left transition", data.theme === t.id ? "border-brand-300 bg-brand-50 ring-4 ring-brand-50" : "border-slate-200 hover:border-brand-200")}>
-                  <p className="text-sm font-semibold text-slate-900">{t.label}</p>
-                  <p className="text-[11px] leading-snug text-slate-500">{t.description}</p>
-                </button>
-              ))}
+            <div role="radiogroup" aria-label="Placard theme" className="grid gap-3 sm:grid-cols-2">
+              {PLACARD_THEMES.map((t) => {
+                const on = data.theme === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    onClick={() => patch({ theme: t.id, custom: {} })}
+                    className={cn(
+                      "relative rounded-2xl border bg-white px-4 py-3.5 text-left transition",
+                      on ? "border-[var(--primary)] ring-2 ring-[var(--primary)]/25" : "border-slate-200 hover:border-slate-300 hover:shadow-sm"
+                    )}
+                  >
+                    {on ? (
+                      <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-white">
+                        <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                      </span>
+                    ) : null}
+                    <p className="pr-8 text-[15px] font-semibold text-slate-900">{t.label}</p>
+                    <p className="mt-0.5 text-sm leading-snug text-slate-500">{t.description}</p>
+                  </button>
+                );
+              })}
             </div>
             <div className="mt-4">
               <label className="flex items-center justify-between text-sm font-medium text-slate-700">
@@ -275,20 +308,9 @@ export default function PlacardEditorPage() {
             </div>
             <p className="mt-2 text-xs text-slate-500">Logo and company name always come from your agent profile and appear on every PDF.</p>
           </div>
-        </div>
-
-        <div className="xl:sticky xl:top-24 xl:self-start">
-          <div className="rounded-3xl border border-slate-200 bg-white p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-900">Live preview</p>
-              <p className="text-xs text-slate-500">{landscape ? "A4 landscape · print-ready" : "A4 portrait · print-ready"}</p>
-            </div>
-            <div className={cn("mx-auto overflow-hidden rounded-xl bg-slate-100 shadow-inner ring-1 ring-slate-200", landscape ? "max-w-full" : "max-w-[520px]")}>
-              <canvas ref={canvasRef} aria-label="Welcome placard preview" role="img" className="block h-auto w-full" />
-            </div>
-          </div>
-        </div>
-      </div>
+        </>
+        }
+      />
     </PageShell>
   );
 }

@@ -177,18 +177,11 @@ export function PaymentDetailsSkeleton() {
 export function DashboardSkeleton() {
   return (
     <Loading label="Loading your dashboard" className="min-h-screen bg-slate-50">
-      <div className="fixed inset-y-0 left-0 hidden w-64 space-y-3 border-r border-slate-200 bg-white p-5 lg:block">
-        <Skeleton className="h-8 w-32" />
-        <Skeleton className="h-11 w-full rounded-xl" />
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="h-8 w-full rounded-xl" />
-        ))}
+      <div className="flex h-[72px] items-center gap-3 border-b-2 border-[var(--primary)] bg-white px-4 sm:px-6 xl:h-[84px] xl:px-10">
+        <Skeleton className="h-11 w-36 rounded-full" />
+        <Skeleton className="ml-auto h-10 w-40 rounded-full" />
       </div>
-      <div className="flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-4 sm:px-6 lg:pl-[17rem]">
-        <Skeleton className="h-10 w-full max-w-md rounded-xl" />
-        <Skeleton className="ml-auto h-9 w-9 rounded-full" />
-      </div>
-      <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:pl-[17.5rem]">
+      <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6">
         <Skeleton className="h-40 w-full rounded-3xl" />
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (

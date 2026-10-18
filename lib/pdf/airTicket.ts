@@ -43,7 +43,7 @@ function segmentCard(c: Ctx, g: AirTicketData["segments"][number], i: number) {
   ensure(c, h + 10);
   rect(c, MARGIN, c.y - h + 10, w, h, WHITE, LINE);
   rect(c, MARGIN, c.y - h + 10, 4, h, c.accent);
-  text(c, `FLIGHT ${i + 1}  -  ${airline(g)}  ${g.flightNumber.toUpperCase()}`, MARGIN + 14, c.y - 4, { size: 8.5, font: c.fonts.bold, color: c.accent });
+  text(c, `FLIGHT ${i + 1}  ·  ${airline(g)}  ·  ${g.flightNumber.toUpperCase()}`, MARGIN + 14, c.y - 4, { size: 8.5, font: c.fonts.bold, color: c.accent });
   text(c, `${g.travelClass}${g.bookingClass ? ` (${g.bookingClass.toUpperCase()})` : ""}`, c.width - MARGIN - 10, c.y - 4, { size: 8, color: GREY, align: "right" });
 
   const colW = (w - 28) / 3;
@@ -67,6 +67,7 @@ function segmentCard(c: Ctx, g: AirTicketData["segments"][number], i: number) {
 
 function fare(c: Ctx, d: AirTicketData) {
   if (d.fareMode === "hide") return;
+  ensure(c, 130); // keep the fare block on one page
   sectionTitle(c, "Fare");
   const rows: [string, number, boolean?][] =
     d.fareMode === "breakdown"
@@ -79,12 +80,13 @@ function fare(c: Ctx, d: AirTicketData) {
         ]
       : [];
   const w = 230;
-  const x = c.width - MARGIN - w;
+  // The total's tinted box reaches 8pt past the figures; keep it inside the right margin.
+  const x = c.width - MARGIN - w - 8;
   for (const [k, v] of rows) {
     if (!v) continue;
     ensure(c, 16);
     text(c, k, x, c.y, { size: 9, color: GREY });
-    text(c, money(v, d.currency), x + w, c.y, { size: 9, align: "right" });
+    text(c, v < 0 ? `– ${money(-v, d.currency)}` : money(v, d.currency), x + w, c.y, { size: 9, align: "right" });
     c.y -= 14;
   }
   ensure(c, 32);
@@ -100,7 +102,7 @@ const NOTES =
 
 export async function renderAirTicket(d: AirTicketData, agent: Agent, plan: PlanId): Promise<Uint8Array> {
   const c = await createDoc({ agent, plan, title: `E-ticket ${d.airlinePnr}`, accent: d.layout === "confirmation" ? "#0f766e" : "#3b7d0c" });
-  c.footer = `Airline e-ticket - Airline PNR ${d.airlinePnr.toUpperCase()}${d.crsPnr ? ` - CRS PNR ${d.crsPnr.toUpperCase()}` : ""}`;
+  c.footer = `Airline e-ticket · Airline PNR ${d.airlinePnr.toUpperCase()}${d.crsPnr ? ` · CRS PNR ${d.crsPnr.toUpperCase()}` : ""}`;
   // The agency header honours the ticket's GST / IATA switches.
   c.agent = {
     ...agent,
@@ -160,8 +162,8 @@ export async function renderAirTicket(d: AirTicketData, agent: Agent, plan: Plan
         paxName(p),
         p.type,
         p.ticketNumber || "Pending",
-        p.seat || "-",
-        [p.cabinBaggage, p.checkedBaggage].filter(Boolean).join(" / ") || "-",
+        p.seat || "–",
+        [p.cabinBaggage, p.checkedBaggage].filter(Boolean).join(" / ") || "–",
       ])
     );
   }

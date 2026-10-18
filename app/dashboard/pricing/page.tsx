@@ -13,7 +13,7 @@ import { api, fileToDataUrl } from "@/lib/agent/client";
 import {
   ALL_SERVICES,
   formatInr,
-  GRACE_DAYS,
+  graceDays,
   isBillingCycle,
   isPaidPlan,
   PLAN_COMPARISON,
@@ -140,7 +140,7 @@ export default function PricingPage() {
           <p role="status" className="relative mx-auto mt-4 flex max-w-2xl items-start gap-2 rounded-2xl bg-amber-100 px-4 py-2.5 text-left text-sm text-amber-900">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
-              Your <strong className="capitalize">{sub.paidPlan}</strong> plan ended on {fmtDate(sub.expiresAt!)}. You&apos;re in the {GRACE_DAYS[sub.cycle ?? "yearly"]}-day grace period
+              Your <strong className="capitalize">{sub.paidPlan}</strong> plan ended on {fmtDate(sub.expiresAt!)}. You&apos;re in the {graceDays(sub.paidPlan, sub.cycle)}-day grace period
               until {fmtDate(sub.graceEndsAt!)} ({sub.daysLeft} day{sub.daysLeft === 1 ? "" : "s"} left) — renew monthly or yearly below and your new term continues from your old end date.
             </span>
           </p>
@@ -168,14 +168,14 @@ export default function PricingPage() {
               monthly: paidId ? prices[paidId].monthly : null,
               yearly: paidId ? prices[paidId].yearly : null,
               features: ALL_SERVICES.map((k) => ({ label: SERVICE_LABELS[k], included: p.services.includes(k) })),
-              extras: [...p.highlights.filter((h) => h.label !== "Services").map((h) => `${h.value} ${h.label.toLowerCase()}`), ...p.features],
+              extras: [...new Set([...p.highlights.filter((h) => h.label !== "Services").map((h) => `${h.value} ${h.label.toLowerCase()}`), ...p.features])],
               description: p.headline,
               tag: isCurrent ? "Current plan" : undefined,
               priceNote: !paidId
                 ? "No subscription · no credit card"
                 : cycle === "yearly"
-                  ? `Save ${yearlySaving(paidId, prices)}% vs monthly · ${GRACE_DAYS.yearly}-day grace period`
-                  : `Billed monthly · ${GRACE_DAYS.monthly}-day grace period`,
+                  ? `Save ${yearlySaving(paidId, prices)}% vs monthly · ${graceDays(paidId, "yearly")}-day grace period`
+                  : `Billed monthly · ${graceDays(paidId, "monthly")}-day grace period`,
               buttonText: !paidId ? (isCurrent ? "Your current plan" : "Included") : info?.pending?.planId === p.id ? "View payment" : p.id === sub.paidPlan ? `Renew ${cycle}` : p.cta,
               onSelect: paidId ? () => setCheckout(paidId) : undefined,
               buttonDisabled: !paidId,
@@ -354,7 +354,7 @@ function CheckoutDialog({
         currency: o.currency,
         name: "Vouchlio",
         description: o.description,
-        image: `${window.location.origin}/logo-mark.png`,
+        image: `${window.location.origin}/brand/vouchlio-mark.png`,
         prefill: o.prefill,
         theme: { color: "#e63946" },
         retry: { enabled: true, max_count: 3 },
@@ -532,7 +532,7 @@ function CheckoutDialog({
                   >
                     <span className="block font-semibold capitalize text-slate-900">{c}</span>
                     <span className="block text-xs text-slate-500">
-                      {formatInr(prices[planId][c])} · {GRACE_DAYS[c]}-day grace
+                      {formatInr(prices[planId][c])} · {graceDays(planId, c)}-day grace
                     </span>
                   </button>
                 ))}

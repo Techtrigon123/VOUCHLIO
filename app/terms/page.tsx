@@ -3,242 +3,202 @@ import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
 import LegalPage, { type LegalSection } from "@/components/legal/LegalPage";
 import { SITE } from "@/lib/site";
-import { FREE_MONTHLY_DOCUMENTS, GRACE_DAYS, SILVER_RETENTION_DAYS, formatInr } from "@/lib/agent/plans";
+import { FREE_MONTHLY_DOCUMENTS, GRACE_SENTENCE, SILVER_RETENTION_DAYS, formatInr } from "@/lib/agent/plans";
 import { getAppSettings, type Prices } from "@/lib/settings";
 
 export const metadata: Metadata = pageMeta({
-  title: "Terms and Conditions",
-  description: "The terms for using Vouchlio: accounts, Silver, Gold and Platinum plans, payments, your documents and customer data, acceptable use and governing law.",
+  title: "Terms of Service",
+  description:
+    "The terms for using Vouchlio: the service, accounts, your documents and customer data, acceptable use, subscriptions and GST billing, liability and governing law.",
   path: "/terms",
 });
 
 const { legal } = SITE;
+const EFFECTIVE_DATE = "18 October 2026";
+const email = <a href={`mailto:${SITE.supportEmail}`}>{SITE.supportEmail}</a>;
 
 const buildSections = (pricing: Prices): LegalSection[] => [
   {
-    id: "agreement",
-    title: "Agreement",
-    body: (
-      <p>
-        These Terms and Conditions (&quot;Terms&quot;) are a contract between you and <strong>{legal.entityName}</strong>{" "}
-        (&quot;we&quot;, &quot;us&quot;), which operates {SITE.name}. By creating an account or using the service you agree to
-        these Terms and to our <Link href="/privacy">Privacy Policy</Link> and <Link href="/refunds">Refund Policy</Link>. If
-        you use the service for a business, you confirm you are authorised to accept these Terms on its behalf.
-      </p>
-    ),
-  },
-  {
-    id: "eligibility",
-    title: "Who can use the service",
-    body: (
-      <ul>
-        <li>You must be at least 18 years old and able to enter into a contract under Indian law.</li>
-        <li>The service is for travel businesses — travel agents, tour operators, DMCs, hotels and similar.</li>
-        <li>The information you give us, including your business details, must be accurate and kept up to date.</li>
-      </ul>
-    ),
-  },
-  {
-    id: "accounts",
-    title: "Your account",
-    body: (
-      <ul>
-        <li>Keep your password confidential. You are responsible for everything done through your account.</li>
-        <li>Tell us straight away through our <Link href="/contact">contact page</Link> if you suspect unauthorised access.</li>
-        <li>One account is for one business. Do not share or resell access.</li>
-      </ul>
-    ),
-  },
-  {
     id: "service",
-    title: "What the service does",
+    title: "Service description",
     body: (
       <>
         <p>
-          {SITE.name} lets you create travel documents — hotel vouchers, air tickets, pickup vouchers, welcome placards,
-          invoices, proforma invoices and receipts — and download or share them as PDFs.
+          The Platform provides cloud-based software to create, manage and export professional travel documents &mdash;
+          customisable hotel vouchers, day-by-day itineraries, air tickets, pickup vouchers, welcome placards, proforma invoices,
+          GST tax invoices and payment receipts &mdash; to keep customer details in a private directory, to set up your agency
+          branding and document numbering, and to work from one workspace. Features may change or expand over time.
         </p>
         <p>
-          <strong>We are a software provider only.</strong> We are not a travel agent, airline, hotel or transport operator,
-          and we are not a party to any booking between you and your customers or suppliers. You are solely responsible for
-          the accuracy of every document you create and issue, including GST calculations and tax treatment on invoices.
+          <strong>Vouchlio is a documentation tool, not legal, tax or accounting advice.</strong> Vouchlio and Frozen Highway are
+          not a travel agent, tour operator, airline, hotel, transport operator or booking intermediary, and are not a party to
+          any booking between you and your customers or suppliers. All travel obligations, supplier bookings and end-customer
+          liability remain between you and your clients.
         </p>
       </>
     ),
   },
   {
-    id: "plans",
-    title: "Plans and payments",
+    id: "accounts",
+    title: "Accounts and eligibility",
     body: (
       <>
-        <ul>
-          <li>
-            <strong>Silver</strong> is free and includes hotel vouchers and tax invoices, with up
-            to {FREE_MONTHLY_DOCUMENTS} new documents per calendar month (India time). Documents stay open for{" "}
-            {SILVER_RETENTION_DAYS} days from creation and are then locked (not deleted). PDFs carry a watermark, and upload
-            auto-fill is limited per day.
-          </li>
-          <li>
-            <strong>Gold</strong> adds air tickets and costs {formatInr(pricing.gold.monthly)} per month or{" "}
-            {formatInr(pricing.gold.yearly)} per year. <strong>Platinum</strong> includes every service, including pickup
-            vouchers and welcome placards, and costs {formatInr(pricing.platinum.monthly)} per month or{" "}
-            {formatInr(pricing.platinum.yearly)} per year. Prices include GST. Features and limits are shown on the
-            pricing page.
-          </li>
-          <li>
-            Paid plans are paid in advance, online through Razorpay (UPI, card, net banking or wallet) or by UPI with a
-            payment proof. Online payments activate your plan as soon as the payment is confirmed. For UPI proof payments,
-            we verify the payment after you submit your transaction ID and proof, then activate your plan. Benefits run for one month (monthly billing) or one year (yearly
-            billing) from activation. If you renew before your plan ends, or during its grace period, the new term starts
-            from your old end date.
-          </li>
-          <li>
-            Paid plans do not renew automatically. When a plan ends it keeps working for a grace period of{" "}
-            {GRACE_DAYS.monthly} days (monthly) or {GRACE_DAYS.yearly} days (yearly), during which you can renew monthly or
-            yearly. After the grace period your account returns to Silver until you renew: services outside Silver are locked,
-            and your saved documents are kept.
-          </li>
-          <li>
-            We may change prices for future periods with at least 30 days&apos; notice. A price change never affects a
-            period you have already paid for.
-          </li>
-          <li>
-            Refunds are handled under our <Link href="/refunds">Refund Policy</Link>.
-          </li>
-        </ul>
+        <p>
+          You must be a genuine travel business (or act for one), at least 18 years old, and give accurate registration and
+          business details. You are responsible for keeping your login details safe and for all activity under your account.
+        </p>
+        <p>
+          Tell us promptly at {email} if you suspect unauthorised access. We may verify business profiles, keep downloads locked
+          until a profile is approved, and suspend accounts that appear fraudulent, deceptive or misused.
+        </p>
       </>
     ),
   },
   {
     id: "your-content",
-    title: "Your documents and your customers' data",
-    body: (
-      <>
-        <ul>
-          <li>
-            You own the content you add — your logo, business details and documents. You give us permission to store and
-            process it only to run the service for you.
-          </li>
-          <li>
-            When you enter your customers&apos; personal data, you are responsible for having a lawful basis (such as their
-            consent) under the DPDP Act, and for handling their requests about it. We process that data only on your
-            instructions, as described in our <Link href="/privacy">Privacy Policy</Link>.
-          </li>
-          <li>Download copies of documents you need to keep. On Silver, access to older documents is locked after {SILVER_RETENTION_DAYS} days.</li>
-        </ul>
-      </>
-    ),
-  },
-  {
-    id: "auto-fill",
-    title: "Upload auto-fill",
-    body: (
-      <p>
-        Upload auto-fill uses an AI service to read a voucher or e-ticket you upload and fill in the form. It can make
-        mistakes. Always check every filled field before you save or issue a document. Only upload files you are allowed
-        to share with us and our AI provider.
-      </p>
-    ),
-  },
-  {
-    id: "acceptable-use",
-    title: "Acceptable use",
-    body: (
-      <>
-        <p>You must not use the service to:</p>
-        <ul>
-          <li>
-            create documents for bookings, tickets, payments or reservations that do not exist, or that misrepresent a
-            booking to a customer, hotel, airline or authority;
-          </li>
-          <li>impersonate any airline, hotel, company or person, or use their trademarks without permission;</li>
-          <li>defraud anyone, evade taxes, or break any law;</li>
-          <li>upload malware, or content that is unlawful, abusive or infringes someone else&apos;s rights;</li>
-          <li>
-            probe, overload or attack the service, bypass rate limits or security, or scrape it with automated tools; or
-          </li>
-          <li>copy, resell or reverse-engineer the service.</li>
-        </ul>
-        <p>We may remove content and suspend accounts that break these rules.</p>
-      </>
-    ),
-  },
-  {
-    id: "ip",
-    title: "Our intellectual property",
-    body: (
-      <p>
-        The software, design, templates and branding of {SITE.name} belong to us or our licensors. We give you a limited,
-        non-exclusive, non-transferable right to use the service for your business while your account is in good standing.
-        The PDFs you generate are yours to use for your business.
-      </p>
-    ),
-  },
-  {
-    id: "availability",
-    title: "Availability and changes",
-    body: (
-      <p>
-        We work to keep the service available and secure, but we do not guarantee it will always be uninterrupted or
-        error-free. We may improve, change or discontinue features. If we discontinue a paid feature during your paid
-        period, we will offer a fair alternative or a pro-rata refund.
-      </p>
-    ),
-  },
-  {
-    id: "termination",
-    title: "Suspension and closing your account",
+    title: "Your content and responsibilities",
     body: (
       <ul>
-        <li>You can ask us to close your account at any time through our <Link href="/contact">contact page</Link>.</li>
         <li>
-          We may suspend or close an account that breaks these Terms, fails payment verification, or puts other users or
-          the service at risk. Where reasonable, we will tell you why and give you a chance to fix the issue.
+          <strong>Ownership and licence:</strong> you own the customer details, guest records, logo and business information you
+          enter. You give us a limited licence to store, process and render this data only to provide and maintain the Service
+          for you, as described in our <Link href="/privacy">Privacy Policy</Link>.
         </li>
-        <li>After closure, your data is handled as described in our Privacy Policy.</li>
+        <li>
+          <strong>Your customers&apos; data:</strong> when you enter your customers&apos; personal data, you are responsible for
+          having a lawful basis (such as their consent) under the Digital Personal Data Protection Act, 2023, and for handling
+          their requests about it.
+        </li>
+        <li>
+          <strong>Accuracy and compliance:</strong> you are solely responsible for the accuracy of amounts, line items, guest
+          names, hotel references, CGST/SGST/IGST breakdowns and client GSTINs, and for the legal and tax compliance of every
+          document you generate or issue.
+        </li>
+        <li>
+          <strong>No guarantee of third-party acceptance:</strong> PDFs and images are produced from your inputs. We do not
+          guarantee that hotels, suppliers, clients, tax authorities or auditors will accept them.
+        </li>
+        <li>
+          <strong>Keep copies:</strong> download the documents you need to keep. On the free Silver plan, documents are locked
+          (not deleted) {SILVER_RETENTION_DAYS} days after creation.
+        </li>
+        <li>
+          <strong>Prohibited material:</strong> you must not upload, store, generate or send unlawful, fraudulent, misleading or
+          infringing content, including fake or altered tickets or vouchers.
+        </li>
       </ul>
     ),
   },
   {
-    id: "disclaimers",
-    title: "Disclaimers",
+    id: "acceptable-use",
+    title: "Acceptable use and data protection",
+    body: (
+      <>
+        <p>
+          You must not reverse-engineer, scrape, overload or try to breach the security of the Platform; impersonate anyone; send
+          unsolicited communications; share your account or resell the Service without our written permission; or use the
+          Platform for any illegal activity.
+        </p>
+        <p>
+          <strong>Data shield and non-solicitation covenant.</strong> Your workspace data, customer directory and booking details
+          are kept separate from every other subscriber&apos;s. Vouchlio and its parent entity, Frozen Highway, guarantee that your
+          customer data is never used for travel marketing, and is never solicited, cross-sold or shared with third parties for
+          marketing under any circumstances.
+        </p>
+        <p>We may limit, suspend or terminate accounts that break these rules or threaten the security of the Platform.</p>
+      </>
+    ),
+  },
+  {
+    id: "ip-availability",
+    title: "Intellectual property and availability",
+    body: (
+      <>
+        <p>
+          Vouchlio, its software, PDF layouts, design templates, user interface, database design and branding remain our
+          exclusive property. You receive a limited, revocable, non-exclusive, non-transferable licence to use the Platform for
+          your own internal business operations.
+        </p>
+        <p>
+          The Service is provided &quot;as is&quot; and &quot;as available&quot;. We aim for 99.5% availability, but we do not guarantee
+          uninterrupted access or zero downtime during maintenance or unexpected outages.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "subscriptions",
+    title: "Subscriptions, billing and liability",
+    body: (
+      <>
+        <p>
+          <strong>Plans.</strong> <strong>Silver</strong> is free and includes hotel vouchers and tax invoices, with up to{" "}
+          {FREE_MONTHLY_DOCUMENTS} new documents per calendar month (India time), documents locked after {SILVER_RETENTION_DAYS}{" "}
+          days and watermarked PDFs. <strong>Gold</strong> adds proforma invoices and air tickets for{" "}
+          {formatInr(pricing.gold.monthly)} per month or {formatInr(pricing.gold.yearly)} per year. <strong>Platinum</strong>{" "}
+          includes every service &mdash; receipts, pickup vouchers, welcome placards and the itinerary builder &mdash; for{" "}
+          {formatInr(pricing.platinum.monthly)} per month or {formatInr(pricing.platinum.yearly)} per year. Full features and
+          limits are on the pricing page.
+        </p>
+        <p>
+          <strong>Payment and renewal.</strong> Paid plans are paid in advance for one month or one year, online through
+          Razorpay or by UPI with a payment proof that we verify. Plans <strong>do not renew automatically</strong>: you choose to
+          pay each period. After a plan ends it keeps working for a grace period of {GRACE_SENTENCE}; renewing before the end or during grace continues from your old end date. After the
+          grace period your account returns to Silver and your saved documents are kept.
+        </p>
+        <p>
+          <strong>Tax billing.</strong> Prices include GST. Subscriptions for businesses in India are billed with 18% GST under
+          SAC code 998314 (information technology software services), so GST-registered businesses can claim Input Tax Credit
+          (ITC). Subscriptions for customers outside India are supplied as a zero-rated export of services under a valid Letter of
+          Undertaking (LUT).
+        </p>
+        <p>
+          <strong>Refunds and price changes.</strong> Fees for a billing period that has started are non-refundable, except as set
+          out in our <Link href="/refunds">Refund Policy</Link> (for example, duplicate or unverified payments). We may change
+          prices for future periods with at least 30 days&apos; notice; a change never affects a period you have already paid for.
+        </p>
+        <p>
+          <strong>Limitation of liability.</strong> To the maximum extent permitted by law, Vouchlio and Frozen Highway are not
+          liable for indirect, incidental or consequential damages, or for financial losses arising from errors in your
+          documents, tax penalties, audit adjustments, booking cancellations, or anyone relying on PDFs you generate.
+        </p>
+        <p>
+          <strong>Liability cap.</strong> Our total liability under these Terms is limited to the subscription fees you actually
+          paid us in the three (3) months before the claim, or {formatInr(5000)}, whichever is lower. Nothing in these Terms limits
+          liability that cannot be limited under Indian law.
+        </p>
+        <p>
+          <strong>Indemnity.</strong> You agree to compensate us for claims, penalties and costs arising from documents you issue,
+          your breach of these Terms, or your handling of your customers&apos; personal data.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "ownership",
+    title: "Brand and corporate ownership",
     body: (
       <p>
-        Except as required by law, the service is provided &quot;as is&quot; and &quot;as available&quot;. We do not give
-        any warranty that documents created with the service meet the requirements of a particular hotel, airline, authority
-        or tax regime — checking that is your responsibility.
+        Vouchlio is a software-as-a-service (SaaS) travel documentation platform designed and operated by Frozen Highway, a
+        registered entity in India. Our official website is <a href={SITE.website}>vouchlio.com</a>.
       </p>
     ),
   },
   {
-    id: "liability",
-    title: "Limitation of liability",
+    id: "termination-law",
+    title: "Termination and governing law",
     body: (
-      <p>
-        To the extent permitted by law, we are not liable for indirect or consequential losses, lost profits, lost bookings or
-        lost data. Our total liability for any claim relating to the service is limited to the amount you paid us in the 12
-        months before the claim. Nothing in these Terms limits liability that cannot be limited under Indian law.
-      </p>
-    ),
-  },
-  {
-    id: "indemnity",
-    title: "Indemnity",
-    body: (
-      <p>
-        You agree to compensate us for claims, penalties and costs arising from documents you issue, your breach of these
-        Terms, or your handling of your customers&apos; personal data.
-      </p>
-    ),
-  },
-  {
-    id: "law",
-    title: "Governing law and disputes",
-    body: (
-      <p>
-        These Terms are governed by the laws of India. We will first try to resolve any dispute informally — please contact
-        us. If it cannot be resolved, the courts of {legal.jurisdictionCity} will have exclusive jurisdiction.
-      </p>
+      <>
+        <p>
+          You may stop using the Platform at any time; since plans do not renew automatically, simply do not renew. To close your
+          account and have your data deleted, email {email}. We may suspend or terminate accounts for breach of these Terms or for
+          non-payment.
+        </p>
+        <p>
+          These Terms are governed by the laws of India. We will first try to resolve any dispute informally, so please contact
+          us. If it cannot be resolved, the courts at {legal.jurisdictionCity}, India will have exclusive jurisdiction.
+        </p>
+      </>
     ),
   },
   {
@@ -246,9 +206,9 @@ const buildSections = (pricing: Prices): LegalSection[] => [
     title: "Changes to these Terms",
     body: (
       <p>
-        We may update these Terms. We will change the &quot;Last updated&quot; date and, for significant changes, notify you
-        by email or in the app at least 15 days before they take effect. Continuing to use the service after that means you
-        accept the updated Terms.
+        We may update these Terms. We will change the &quot;Last updated&quot; date and, for significant changes, notify you by
+        email or in the app at least 15 days before they take effect. Continuing to use the Service after that means you accept
+        the updated Terms.
       </p>
     ),
   },
@@ -257,8 +217,13 @@ const buildSections = (pricing: Prices): LegalSection[] => [
     title: "Contact",
     body: (
       <p>
-        Questions about these Terms? Reach us through our <Link href="/contact">contact page</Link>. {legal.entityName},{" "}
-        {legal.address}.
+        <strong>Vouchlio Compliance &amp; Legal</strong>
+        <br />
+        Email: {email}
+        <br />
+        Parent entity: Frozen Highway, {legal.address}
+        <br />
+        Website: <a href={SITE.website}>vouchlio.com</a>
       </p>
     ),
   },
@@ -268,12 +233,23 @@ export default async function TermsPage() {
   const sections = buildSections((await getAppSettings()).pricing);
   return (
     <LegalPage
-      title="Terms and Conditions"
+      title="Terms of Service"
       intro={
-        <p>
-          Please read these Terms carefully. They explain your rights and responsibilities when you use {SITE.name}, including
-          how plans and payments work and what you may and may not use the service for.
-        </p>
+        <>
+          <p>
+            <strong>Effective date:</strong> {EFFECTIVE_DATE}
+          </p>
+          <p>
+            These Terms govern your use of {SITE.name} (the &quot;Platform&quot; or &quot;Service&quot;; &quot;we&quot;, &quot;us&quot;), a B2B
+            cloud travel operations and document platform for travel agencies, tour operators, independent travel advisors and
+            Destination Management Companies (DMCs). Vouchlio is owned, designed and operated by the registered legal entity Frozen
+            Highway, India.
+          </p>
+          <p>
+            By creating an account or using the Platform, you agree to these Terms. If you do not agree, do not use the Service.
+            See also our <Link href="/privacy">Privacy Policy</Link> and <Link href="/refunds">Refund Policy</Link>.
+          </p>
+        </>
       }
       sections={sections}
     />

@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Pricing, type PricingPlan } from "@/components/ui/pricing";
-import { ALL_SERVICES, GRACE_DAYS, PLANS, SERVICE_LABELS } from "@/lib/agent/plans";
+import { ALL_SERVICES, GRACE_SENTENCE, PLANS, SERVICE_LABELS } from "@/lib/agent/plans";
 import { getAppSettings } from "@/lib/settings";
 
 /** Homepage pricing: live prices from Vouchlio Admin → Settings, shown in the animated pricing cards. */
@@ -19,7 +19,7 @@ export default async function PricingSection() {
     monthly: p.prices?.monthly ?? null,
     yearly: p.prices?.yearly ?? null,
     features: ALL_SERVICES.map((k) => ({ label: SERVICE_LABELS[k], included: p.services.includes(k) })),
-    extras: [...p.highlights.filter((h) => h.label !== "Services").map((h) => `${h.value} ${h.label.toLowerCase()}`), ...p.features],
+    extras: [...new Set([...p.highlights.filter((h) => h.label !== "Services").map((h) => `${h.value} ${h.label.toLowerCase()}`), ...p.features])],
     description: p.headline,
     buttonText: p.prices == null ? "Start free" : `Start free, upgrade to ${p.name}`,
     href: "/signup",
@@ -36,7 +36,7 @@ export default async function PricingSection() {
         annualSaving={annualSaving}
       />
       <p className="mx-auto mt-10 max-w-3xl px-4 text-center text-sm text-[var(--muted-foreground)]">
-        Paid plans are paid by UPI and activated once we verify your payment. When a plan ends you get a {GRACE_DAYS.monthly}-day (monthly) or {GRACE_DAYS.yearly}-day (yearly) grace period to renew. See our{" "}
+        Paid plans are paid by UPI and activated once we verify your payment. When a plan ends you get a grace period to renew: {GRACE_SENTENCE}. See our{" "}
         <Link href="/refunds" className="underline underline-offset-2 hover:text-[var(--foreground)]">
           Refund Policy
         </Link>

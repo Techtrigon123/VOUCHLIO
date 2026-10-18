@@ -3,6 +3,7 @@ import {
   type InvoiceData,
   invoiceTotals,
   INVOICE_LABELS,
+  termsFor,
   GST_TREATMENTS,
   num,
 } from "@/lib/agent/documents";
@@ -39,7 +40,7 @@ export async function renderInvoice(
   const kind = d.docType;
   const labels = INVOICE_LABELS[kind];
   const c = await createDoc({ agent, plan, title: `${labels.title} ${d.number}` });
-  c.footer = `${labels.title} ${d.number} - This is a computer generated document.`;
+  c.footer = `${labels.title} ${d.number} · This is a computer-generated document.`;
   const t = invoiceTotals(d, agent.state);
 
   letterhead(c, { docTitle: labels.pdfTitle, docSubtitle: `# ${d.number}`, variant: "rule" });
@@ -109,8 +110,9 @@ export async function renderInvoice(
 
   // Totals box.
   const tw = 240;
-  const tx = c.width - MARGIN - tw;
-  const rows: [string, string][] = [["Sub total", fmt(t.subtotal)]];
+  // The total's tinted box reaches 8pt past the figures; keep it inside the right margin.
+  const tx = c.width - MARGIN - tw - 8;
+  const rows: [string, string][] = [["Subtotal", fmt(t.subtotal)]];
   if (t.tax) {
     if (t.inter) rows.push(["IGST", fmt(t.igst)]);
     else rows.push(["CGST", fmt(t.cgst)], ["SGST", fmt(t.sgst)]);
@@ -124,12 +126,12 @@ export async function renderInvoice(
   }
   c.y -= 6;
   rect(c, tx - 8, c.y - 8, tw + 16, 22, tint(c.accent, 0.88));
-  text(c, `Total (${d.currency})`, tx, c.y, { size: 10, font: c.fonts.bold });
+  text(c, kind === "receipt" ? `Amount received (${d.currency})` : `Total (${d.currency})`, tx, c.y, { size: 10, font: c.fonts.bold });
   text(c, fmt(t.total), tx + tw, c.y, { size: 11, font: c.fonts.bold, color: c.accent, align: "right" });
   c.y -= 26;
   if (kind !== "receipt" && extra.paidAmount) {
     text(c, "Payment made", tx, c.y, { size: 9, color: GREY });
-    text(c, `(-) ${fmt(extra.paidAmount)}`, tx + tw, c.y, { size: 9, align: "right" });
+    text(c, `– ${fmt(extra.paidAmount)}`, tx + tw, c.y, { size: 9, align: "right" });
     c.y -= 14;
     text(c, "Balance due", tx, c.y, { size: 10, font: c.fonts.bold });
     text(c, fmt(Math.max(0, t.total - extra.paidAmount)), tx + tw, c.y, { size: 10, font: c.fonts.bold, align: "right" });
@@ -138,7 +140,7 @@ export async function renderInvoice(
   c.y -= 6;
 
   if (d.notes?.trim()) {
-    sectionTitle(c, kind === "receipt" ? "Payment details" : "Notes");
+    sectionTitle(c, "Notes");
     paragraph(c, d.notes, { size: 8.5 });
   }
 
@@ -164,7 +166,7 @@ export async function renderInvoice(
     c.y -= 12;
   }
 
-  const terms = (d.terms ?? "").split("\n").map((l) => l.trim()).filter(Boolean).slice(0, 12);
+  const terms = termsFor(kind, d.terms).split("\n").map((l) => l.trim()).filter(Boolean).slice(0, 12);
   if (terms.length) {
     sectionTitle(c, "Terms & conditions");
     numberedList(c, terms);

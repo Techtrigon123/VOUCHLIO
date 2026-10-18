@@ -25,8 +25,11 @@ import { isFeatureEnabled } from "@/lib/agent/features";
 import { useAgent } from "./AgentProvider";
 import { BackButton } from "@/components/ui/back-button";
 
-export function PageShell({ children, className, wide }: { children: React.ReactNode; className?: string; wide?: boolean }) {
-  return <div className={cn("mx-auto w-full px-4 py-6 sm:px-6 sm:py-8", wide ? "max-w-[1400px]" : "max-w-6xl", className)}>{children}</div>;
+/** `full`: document editors — nearly the whole screen width, like the navbar. */
+export function PageShell({ children, className, wide, full }: { children: React.ReactNode; className?: string; wide?: boolean; full?: boolean }) {
+  return (
+    <div className={cn("mx-auto w-full px-4 py-6 sm:px-6 sm:py-8", full ? "max-w-[1760px] xl:px-10" : wide ? "max-w-[1400px]" : "max-w-6xl", className)}>{children}</div>
+  );
 }
 
 export function PageHeader({
@@ -119,8 +122,8 @@ export function SectionCard({
   aside?: React.ReactNode;
 }) {
   return (
-    <section id={id} className={cn("scroll-mt-28 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(230,57,70,0.06)] sm:p-6", className)}>
-      <div className="mb-4 flex items-start justify-between gap-3">
+    <section id={id} className={cn("scroll-mt-32 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] sm:p-7", className)}>
+      <div className="mb-5 flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           {Icon ? (
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
@@ -128,8 +131,8 @@ export function SectionCard({
             </span>
           ) : null}
           <div>
-            <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-            {description ? <p className="mt-0.5 text-sm text-slate-500">{description}</p> : null}
+            <h2 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">{title}</h2>
+            {description ? <p className="mt-1 text-sm text-slate-500 sm:text-[15px]">{description}</p> : null}
           </div>
         </div>
         {aside}

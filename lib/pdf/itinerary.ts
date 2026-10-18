@@ -48,7 +48,7 @@ function dateRange(start: string, end: string) {
   if (!start) return "";
   if (!end || end === start) return fmtDate(start);
   const sameYear = start.slice(0, 4) === end.slice(0, 4);
-  return `${sameYear ? fmtDate(start).replace(/ \d{4}$/, "") : fmtDate(start)} - ${fmtDate(end)}`;
+  return `${sameYear ? fmtDate(start).replace(/ \d{4}$/, "") : fmtDate(start)} – ${fmtDate(end)}`;
 }
 
 /** Wrapped lines at `x`, breaking onto a new page as needed; optional bullet on each item's first line. */
@@ -134,16 +134,20 @@ function dayBody(c: Ctx, d: ItineraryData, day: ItineraryDay) {
     c.y -= 3;
   }
   const acts = itineraryLines(day.activities);
-  if (acts.length) {
-    for (const a of acts) lines(c, a, x, width, { size: 9, bullet: c.accent });
-    c.y -= 3;
-  }
   const facts = [
     day.hotel.trim() ? `Stay: ${day.hotel.trim()}` : day.city.trim() && d.template !== "modern" ? `Overnight: ${day.city.trim()}` : "",
     `Meals: ${itineraryMeals(day.meals)}`,
     day.transfer.trim() ? `Transfer: ${day.transfer.trim()}` : "",
   ].filter(Boolean).join("     |     ");
   const h = textHeight(c, facts, 8, width - 16) + 10;
+  if (acts.length) {
+    const tail = Math.min(acts.length, 3);
+    acts.forEach((a, k) => {
+      if (k === acts.length - tail) ensure(c, tail * 13 + h + 12);
+      lines(c, a, x, width, { size: 9, bullet: c.accent });
+    });
+    c.y -= 3;
+  }
   ensure(c, h + 6);
   rect(c, x, c.y - h + 10, width, h, SOFT, LINE);
   text(c, facts, x + 8, c.y - 3.5, { size: 8, color: GREY, maxWidth: width - 16 });
@@ -154,8 +158,8 @@ export async function renderItinerary(d: ItineraryData, agent: Agent, plan: Plan
   const days = Array.isArray(d.days) && d.days.length ? d.days : [];
   const data: ItineraryData = { ...d, days, title: d.title ?? "", destination: d.destination ?? "" };
   const template = data.template ?? "journey";
-  const c = await createDoc({ agent, plan, accent: data.color || "#0f766e", title: `Itinerary ${data.number} - ${data.title}` });
-  c.footer = `Itinerary ${data.number} - prepared by ${agencyName(agent)}`;
+  const c = await createDoc({ agent, plan, accent: data.color || "#0f766e", title: `Itinerary ${data.number} – ${data.title}` });
+  c.footer = `Itinerary ${data.number} · Prepared by ${agencyName(agent)}`;
   const serif = template === "elegant";
   const titleFont = serif ? c.fonts.serifBold : c.fonts.bold;
   const headingOpts = serif ? { font: c.fonts.serifBold } : {};
@@ -188,7 +192,7 @@ export async function renderItinerary(d: ItineraryData, agent: Agent, plan: Plan
       ],
       days.map((day, i) => {
         const date = itineraryDayDate(data.startDate, i);
-        return [String(i + 1), date ? dayLabel(date) : "-", day.title.trim() || `Day ${i + 1}`, day.hotel.trim() || day.city.trim() || "-"];
+        return [String(i + 1), date ? dayLabel(date) : "–", day.title.trim() || `Day ${i + 1}`, day.hotel.trim() || day.city.trim() || "–"];
       }),
       { size: 8 }
     );
@@ -229,7 +233,7 @@ export async function renderItinerary(d: ItineraryData, agent: Agent, plan: Plan
     const w = contentWidth(c);
     const pax = Math.max(1, Math.round((data.adults || 0) + (data.children || 0)));
     const detail = [
-      data.priceMode === "per_person" ? `${money(price.price, data.currency)} per person x ${pax} = ${money(price.total ?? 0, data.currency)}` : "Total for the whole group",
+      data.priceMode === "per_person" ? `${money(price.price, data.currency)} per person × ${pax} = ${money(price.total ?? 0, data.currency)}` : "Total for the whole group",
       data.priceNote?.trim() ?? "",
       data.validUntil ? `Valid until ${fmtDate(data.validUntil)}` : "",
     ].filter(Boolean);

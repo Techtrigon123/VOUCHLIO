@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { requireAgent, serializeAgent, fail } from "@/lib/agent/server";
+import { requireAgent, serializeAgent, isUuid, fail } from "@/lib/agent/server";
+import { getDocument } from "@/lib/db/repo";
 import { effectivePlan, planIncludes } from "@/lib/agent/plans";
 import { isFeatureEnabled } from "@/lib/agent/features";
 import { renderDocumentPdf } from "@/lib/pdf/render";
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
   try {
     const { user, response } = await requireAgent();
     if (response) return response;
-    const body = (await req.json().catch(() => null)) as { kind?: unknown; data?: unknown } | null;
+    const body = (await req.json().catch(() => null)) as { kind?: unknown; data?: unknown; documentId?: unknown } | null;
     if (!body || !isPreviewKind(body.kind) || typeof body.data !== "object" || !body.data) return fail("Invalid request body.");
 
     const agent = serializeAgent(user);
@@ -28,9 +29,17 @@ export async function POST(req: NextRequest) {
     if (!isFeatureEnabled(agent, body.kind) || !planIncludes(plan, body.kind))
       return fail("This document type isn't available on your account.", 403, "FEATURE_DISABLED");
 
+    // Editing a saved invoice: show its recorded payments (paid / balance due) like the real PDF.
+    // The amount comes from the agent's own saved document, never from the request.
+    let paidAmount = 0;
+    if (typeof body.documentId === "string" && isUuid(body.documentId)) {
+      const saved = await getDocument(user.id, body.documentId);
+      if (saved) paidAmount = Number(saved.paidAmount ?? 0);
+    }
+
     let bytes: Uint8Array | null;
     try {
-      bytes = await renderDocumentPdf(body.kind, body.data as Record<string, unknown>, agent, plan);
+      bytes = await renderDocumentPdf(body.kind, body.data as Record<string, unknown>, agent, plan, { paidAmount });
     } catch {
       // Half-filled forms can trip a template (e.g. an unparseable date) — not a server fault.
       return fail("Fill in a few more details to see the preview.", 422, "PREVIEW_INCOMPLETE");

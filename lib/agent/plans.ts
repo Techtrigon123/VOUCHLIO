@@ -3,7 +3,7 @@ import type { DocumentAccess, DocumentKind, PlanId } from "./types";
 /* ─── Plans, services, billing cycles and grace periods ─────────────────────
    Single source of truth for what each plan includes. The server enforces these
    rules (lib/agent/entitlements.ts); the screens read them to show locks and prices.
-   Keep GRACE_DAYS in sync with approve_plan_payment() in supabase/migrations/0005. */
+   Keep GRACE_DAYS in sync with approve_plan_payment() in supabase/migrations/0017. */
 
 export type BillingCycle = "monthly" | "yearly";
 
@@ -21,7 +21,19 @@ export const PAID_PLAN_PRICE_INR = { gold: PLAN_PRICES_INR.gold.yearly, platinum
 export type PaidPlanId = keyof typeof PAID_PLAN_PRICE_INR;
 
 /** Days a paid plan keeps working after it ends, so the customer can renew without losing access. */
-export const GRACE_DAYS: Record<BillingCycle, number> = { monthly: 2, yearly: 5 };
+export const GRACE_DAYS: Record<PaidPlanId, Record<BillingCycle, number>> = {
+  gold: { monthly: 2, yearly: 5 },
+  platinum: { monthly: 5, yearly: 10 },
+};
+
+/** Grace days for a plan and billing cycle (Gold's when the plan isn't known). */
+export const graceDays = (plan: PaidPlanId | null | undefined, cycle: BillingCycle | null | undefined) => GRACE_DAYS[plan ?? "gold"][cycle ?? "yearly"];
+
+/** "2 days (monthly) · 5 days (yearly)" for one plan. */
+export const graceSummary = (plan: PaidPlanId) => `${GRACE_DAYS[plan].monthly} days (monthly) · ${GRACE_DAYS[plan].yearly} days (yearly)`;
+
+/** Both plans in one sentence, for policy pages. */
+export const GRACE_SENTENCE = `${GRACE_DAYS.gold.monthly} days (monthly) or ${GRACE_DAYS.gold.yearly} days (yearly) on Gold, and ${GRACE_DAYS.platinum.monthly} days (monthly) or ${GRACE_DAYS.platinum.yearly} days (yearly) on Platinum`;
 
 /** Silver (free) can create at most this many new documents per calendar month (India time). */
 export const FREE_MONTHLY_DOCUMENTS = 4;
@@ -74,13 +86,6 @@ export function normalizeCycle(v: unknown): BillingCycle {
 /** Silver keeps generated documents open for this many days from creation. */
 export const SILVER_RETENTION_DAYS = 30;
 
-/** Upload auto-fill allowances. */
-export const EXTRACT_LIMITS = {
-  silverVoucherPerDay: 2,
-  silverAirTicketPerDay: 2,
-  goldPerYear: 200,
-} as const;
-
 export function isPaidPlan(p: string): p is PaidPlanId {
   return p === "gold" || p === "platinum";
 }
@@ -119,7 +124,7 @@ export function subscriptionState(a: SubscriptionFields, now = Date.now()): Subs
   const expires = a.subscriptionExpiresAt ? new Date(a.subscriptionExpiresAt).getTime() : NaN;
   // A paid plan with no end date (set by hand) never lapses.
   if (Number.isNaN(expires)) return { plan, paidPlan: plan, cycle, status: "active", expiresAt: null, graceEndsAt: null, daysLeft: null };
-  const graceEnds = expires + GRACE_DAYS[cycle] * DAY_MS;
+  const graceEnds = expires + GRACE_DAYS[plan][cycle] * DAY_MS;
   const base = { paidPlan: plan, cycle, expiresAt: new Date(expires).toISOString(), graceEndsAt: new Date(graceEnds).toISOString() };
   if (now < expires) return { ...base, plan, status: "active", daysLeft: Math.ceil((expires - now) / DAY_MS) };
   if (now < graceEnds) return { ...base, plan, status: "grace", daysLeft: Math.max(1, Math.ceil((graceEnds - now) / DAY_MS)) };
@@ -152,13 +157,13 @@ const days = (n: number) => `${n} day${n === 1 ? "" : "s"}`;
 /**
  * What to tell a paid agent about renewing, or null when nothing is due. Reminders run from
  * RENEW_REMINDER_DAYS before the plan ends (stages at 7, 3 and 1 days left) through the grace period
- * (GRACE_DAYS for the plan's cycle), with a last warning on the final grace day.
+ * (GRACE_DAYS for the plan and cycle), with a last warning on the final grace day.
  */
 export function renewalReminder(s: SubscriptionState): RenewalReminder | null {
   if (!s.paidPlan || !s.cycle || !s.expiresAt || !s.graceEndsAt || s.daysLeft == null) return null;
   const name = planName(s.paidPlan);
   const href = `/dashboard/pricing?plan=${s.paidPlan}&cycle=${s.cycle}`;
-  const grace = GRACE_DAYS[s.cycle];
+  const grace = GRACE_DAYS[s.paidPlan][s.cycle];
   if (s.status === "active") {
     if (s.daysLeft > RENEW_REMINDER_DAYS) return null;
     const stage = s.daysLeft <= 1 ? "1d" : s.daysLeft <= 3 ? "3d" : "7d";
@@ -268,7 +273,7 @@ export const PLANS: PlanDefinition[] = [
       { value: "30 days", label: "History saved" },
     ],
     services: PLAN_SERVICES.silver,
-    features: ["Ready-made professional templates", "2 hotel voucher upload fills a day", "Watermarked PDFs"],
+    features: ["Ready-made professional templates", "Live PDF preview as you type", "Watermarked PDFs"],
   },
   {
     id: "gold",
@@ -284,7 +289,7 @@ export const PLANS: PlanDefinition[] = [
       { value: "Forever", label: "Document history" },
     ],
     services: PLAN_SERVICES.gold,
-    features: ["No watermark · your logo on every document", `${EXTRACT_LIMITS.goldPerYear} upload fills a year`, "All library template styles", "Priority support"],
+    features: ["No watermark · your logo on every document", "All library template styles", "Priority support"],
   },
   {
     id: "platinum",
@@ -296,7 +301,7 @@ export const PLANS: PlanDefinition[] = [
     subscriptionNote: "Your design is never shared with other agents",
     highlights: [
       { value: "8 of 8", label: "Services" },
-      { value: "Unlimited", label: "Upload fills" },
+      { value: "Unlimited", label: "New documents" },
       { value: "Custom", label: "Voucher design" },
     ],
     services: PLAN_SERVICES.platinum,
@@ -322,12 +327,11 @@ export const PLAN_COMPARISON: { label: string; silver: boolean | string; gold: b
   serviceRow("Itinerary builder", "itinerary"),
   { label: "New documents", silver: `${FREE_MONTHLY_DOCUMENTS} / month`, gold: "Unlimited", platinum: "Unlimited" },
   { label: "Document history", silver: `${SILVER_RETENTION_DAYS} days`, gold: "Forever", platinum: "Forever" },
-  { label: "Upload to auto-fill", silver: `${EXTRACT_LIMITS.silverVoucherPerDay}/day (hotel)`, gold: `${EXTRACT_LIMITS.goldPerYear} / year`, platinum: "Unlimited" },
   { label: "Clean PDFs (no watermark)", silver: false, gold: true, platinum: true },
   { label: "Your logo on documents", silver: false, gold: true, platinum: true },
   { label: "Custom-designed templates", silver: false, gold: false, platinum: true },
   { label: "Priority support", silver: false, gold: true, platinum: true },
-  { label: "Grace period after the plan ends", silver: "—", gold: `${GRACE_DAYS.monthly} days (monthly) · ${GRACE_DAYS.yearly} days (yearly)`, platinum: `${GRACE_DAYS.monthly} days (monthly) · ${GRACE_DAYS.yearly} days (yearly)` },
+  { label: "Grace period after the plan ends", silver: "—", gold: graceSummary("gold"), platinum: graceSummary("platinum") },
 ];
 
 type PriceTable = Record<PaidPlanId, Record<BillingCycle, number>>;
@@ -343,11 +347,11 @@ export const pricingFaq = (prices: PriceTable = PLAN_PRICES_INR) => [
   },
   {
     q: "What does Gold add?",
-    a: `Gold (${price("gold", prices)}, GST inclusive) adds proforma invoices and air tickets, removes the monthly document limit and the watermark, adds your logo, keeps history forever and includes ${EXTRACT_LIMITS.goldPerYear} upload auto-fills a year.`,
+    a: `Gold (${price("gold", prices)}, GST inclusive) adds proforma invoices and air tickets, removes the monthly document limit and the watermark, adds your logo, and keeps history forever.`,
   },
   {
     q: "What does Platinum add?",
-    a: `Platinum (${price("platinum", prices)}, GST inclusive) opens all 8 services — including the itinerary builder, payment receipts, pickup vouchers and welcome placards — with unlimited upload auto-fill and vouchers designed only for your agency.`,
+    a: `Platinum (${price("platinum", prices)}, GST inclusive) opens all 8 services — including the itinerary builder, payment receipts, pickup vouchers and welcome placards — and vouchers designed only for your agency.`,
   },
   {
     q: "Monthly or yearly — what's the difference?",
@@ -355,11 +359,7 @@ export const pricingFaq = (prices: PriceTable = PLAN_PRICES_INR) => [
   },
   {
     q: "What happens when my plan ends?",
-    a: `You get a grace period so nothing stops suddenly: ${GRACE_DAYS.monthly} days for monthly plans and ${GRACE_DAYS.yearly} days for yearly plans. Your plan keeps working during the grace period and you can renew monthly or yearly. Renew during the grace period and your new term continues from your old end date. After the grace period your account moves to Silver: services outside Silver lock until you renew, and your saved documents are kept.`,
-  },
-  {
-    q: "What are upload auto-fills?",
-    a: `Upload a hotel voucher or airline e-ticket and we read the details to fill your form automatically. Silver gets ${EXTRACT_LIMITS.silverVoucherPerDay} hotel voucher uploads a day. Gold includes ${EXTRACT_LIMITS.goldPerYear} uploads a year. Platinum is unlimited.`,
+    a: `You get a grace period so nothing stops suddenly: ${GRACE_SENTENCE}. Your plan keeps working during the grace period and you can renew monthly or yearly. Renew during the grace period and your new term continues from your old end date. After the grace period your account moves to Silver: services outside Silver lock until you renew, and your saved documents are kept.`,
   },
   {
     q: "What payment methods do you accept?",

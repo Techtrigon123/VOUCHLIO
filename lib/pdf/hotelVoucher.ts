@@ -73,7 +73,7 @@ function roomsTable(c: Ctx, d: HotelVoucherData) {
     rooms.map((r, i) => [
       String(i + 1),
       r.roomName + (r.extraBed ? `\nExtra bed: ${r.extraBed}` : ""),
-      `${fmtDate(r.checkIn)} - ${fmtDate(r.checkOut)}`,
+      `${fmtDate(r.checkIn)} – ${fmtDate(r.checkOut)}`,
       occupancy(r),
       r.mealPlan,
     ])
@@ -93,7 +93,7 @@ function roomCards(c: Ctx, d: HotelVoucherData) {
       rect(c, x, c.y + 6, cardW, 4, c.accent);
       text(c, `ROOM ${i + j + 1}`, x + 10, c.y - 6, { size: 7, color: c.accent, font: c.fonts.bold });
       text(c, r.roomName, x + 10, c.y - 19, { size: 10.5, font: c.fonts.bold, maxWidth: cardW - 20 });
-      text(c, `${fmtDate(r.checkIn)} - ${fmtDate(r.checkOut)}`, x + 10, c.y - 34, { size: 8, color: GREY });
+      text(c, `${fmtDate(r.checkIn)} – ${fmtDate(r.checkOut)}`, x + 10, c.y - 34, { size: 8, color: GREY });
       text(c, occupancy(r), x + 10, c.y - 45, { size: 8, color: GREY, maxWidth: cardW - 20 });
       text(c, `Meal: ${r.mealPlan}${r.extraBed ? `  |  Extra bed: ${r.extraBed}` : ""}`, x + 10, c.y - 56, { size: 8, maxWidth: cardW - 20 });
     });
@@ -104,6 +104,7 @@ function roomCards(c: Ctx, d: HotelVoucherData) {
 function fareBlock(c: Ctx, d: HotelVoucherData) {
   if (d.fareMode === "hide") return;
   const f = voucherFare(d);
+  ensure(c, 110); // keep the fare block on one page
   sectionTitle(c, "Fare");
   const rows: [string, string][] = [];
   if (d.fareMode === "breakdown") {
@@ -113,7 +114,8 @@ function fareBlock(c: Ctx, d: HotelVoucherData) {
     rows.push(["Fare", money(f.total - f.markup, d.currency)], ["Service charges", money(f.markup, d.currency)]);
   }
   const w = 230;
-  const x = c.width - MARGIN - w;
+  // The total's tinted box reaches 8pt past the figures; keep it inside the right margin.
+  const x = c.width - MARGIN - w - 8;
   for (const [k, v] of rows) {
     ensure(c, 16);
     text(c, k, x, c.y, { size: 9, color: GREY });
@@ -173,7 +175,7 @@ export async function renderHotelVoucher(d: HotelVoucherData, agent: Agent, plan
     title: `Hotel voucher ${d.hcn}`,
     withLogo: !d.withoutLogo,
   });
-  c.footer = `Hotel booking voucher ${d.hcn} - Please present this voucher at check-in.`;
+  c.footer = `Hotel booking voucher ${d.hcn} · Please present this voucher at check-in.`;
   const subtitle = `HCN ${d.hcn}  |  Ref ${d.bookingRef}`;
 
   if (template === "bold") {
@@ -256,7 +258,8 @@ export async function renderHotelVoucher(d: HotelVoucherData, agent: Agent, plan
     ]);
     sectionTitle(c, "Hotel");
     hotelBlock(c, d);
-    sectionTitle(c, `Rooms (${d.rooms.length}) - ${nights(d.checkIn, d.checkOut)} night(s)`);
+    const n = nights(d.checkIn, d.checkOut);
+    sectionTitle(c, n ? `Rooms (${d.rooms.length}) · ${n} night${n === 1 ? "" : "s"}` : `Rooms (${d.rooms.length})`);
     roomsTable(c, d);
   }
 
@@ -272,11 +275,11 @@ export async function renderHotelVoucher(d: HotelVoucherData, agent: Agent, plan
 
 function roomCardsNarrow(c: Ctx, d: HotelVoucherData, width: number) {
   for (const [i, r] of resolvedRooms(d).entries()) {
-    const body = `${fmtDate(r.checkIn)} - ${fmtDate(r.checkOut)}\n${occupancy(r)}\nMeal: ${r.mealPlan}${r.extraBed ? `\nExtra bed: ${r.extraBed}` : ""}`;
+    const body = `${fmtDate(r.checkIn)} – ${fmtDate(r.checkOut)}\n${occupancy(r)}\nMeal: ${r.mealPlan}${r.extraBed ? `\nExtra bed: ${r.extraBed}` : ""}`;
     const h = textHeight(c, body, 8, width - 20) + 30;
     ensure(c, h + 8);
     rect(c, MARGIN, c.y - h + 10, width, h, SOFT, LINE);
-    text(c, `ROOM ${i + 1}  -  ${r.roomName}`, MARGIN + 10, c.y - 2, { size: 9.5, font: c.fonts.bold, maxWidth: width - 20 });
+    text(c, `ROOM ${i + 1}  ·  ${r.roomName}`, MARGIN + 10, c.y - 2, { size: 9.5, font: c.fonts.bold, maxWidth: width - 20 });
     text(c, body, MARGIN + 10, c.y - 16, { size: 8, color: GREY, maxWidth: width - 20 });
     c.y -= h + 6;
   }

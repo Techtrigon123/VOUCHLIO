@@ -10,7 +10,7 @@ import {
   KeyRound,
   Lock,
   LogOut,
-  PanelLeft,
+  Menu,
   Plus,
   Search,
   Settings,
@@ -28,9 +28,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import type { Agent, DocumentKind, PlanId } from "@/lib/agent/types";
-import { displayName, initials, isActive, isSuspended, statusLabel, statusTooltip, verifyTooltip } from "@/lib/agent/profile";
+import { displayName, initials } from "@/lib/agent/profile";
 import { effectivePlan, lowestPlanFor, planIncludes, planLabel, planName } from "@/lib/agent/plans";
 import { useAgent } from "./AgentProvider";
 import { SearchPalette } from "./SearchPalette";
@@ -90,9 +89,7 @@ export function AgentAvatar({ agent, size = 36 }: { agent: Agent; size?: number 
   );
 }
 
-/* ─── Sidebar ──────────────────────────────────────────────────────────── */
-
-const COLLAPSE_KEY = "vouchlio-sidebar-collapsed";
+/* ─── Drawer menu (tablet & phone) ───────────────────────────────────────── */
 
 const ACCOUNT_LINKS: { href: string; label: string; icon: LucideIcon; tone: Tone }[] = [
   { href: "/dashboard/profile", label: "Profile", icon: NAV_ICONS.profile, tone: NAV_TONES.profile },
@@ -368,21 +365,89 @@ function SidebarContent({ agent, onClose, collapsed = false }: { agent: Agent; o
   );
 }
 
-/* ─── Navbar: collapsible sidebar (desktop), drawer (mobile), sticky header ─ */
+/* ─── Navbar: dark top bar (desktop), drawer (tablet & phone) ─────────────── */
+
+/** One top-bar entry: icon above the label; services open a dropdown with "New …" and "History". */
+function TopNavItem({ item, agent, pathname, currentType }: { item: NavItem; agent: Agent; pathname: string; currentType: string | null }) {
+  const router = useRouter();
+  const Icon = item.icon;
+  const active = isItemActive(item, pathname);
+  const locked = lockedNavPlan(item, agent);
+  const tile = cn(
+    "flex h-[60px] min-w-[76px] flex-col items-center justify-center gap-1 rounded-xl px-2.5 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300",
+    active ? "bg-[var(--primary)] text-white shadow-md shadow-[var(--primary)]/25" : "text-slate-600 hover:bg-brand-50 hover:text-[var(--primary)]",
+    locked && "opacity-60 hover:opacity-100"
+  );
+  const body = (
+    <>
+      <Icon aria-hidden className="h-[22px] w-[22px]" strokeWidth={1.75} />
+      <span className="flex items-center gap-0.5 leading-none">
+        {item.label}
+        {locked ? <Lock aria-hidden className="ml-0.5 h-3 w-3" /> : item.subItems ? <ChevronDown aria-hidden className="h-3.5 w-3.5 opacity-80" /> : null}
+      </span>
+    </>
+  );
+
+  if (locked)
+    return (
+      <Link href="/dashboard/pricing" className={tile} title={`${item.label} is on the ${locked === "gold" ? "Gold and Platinum plans" : "Platinum plan"} — upgrade to unlock`}>
+        {body}
+      </Link>
+    );
+  if (!item.subItems)
+    return (
+      <Link href={item.href} aria-current={active ? "page" : undefined} className={tile}>
+        {body}
+      </Link>
+    );
+
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger className={tile} aria-current={active ? "page" : undefined}>
+        {body}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center" sideOffset={10} className="w-72 rounded-2xl p-1.5 shadow-xl">
+        {item.subItems.map((sub) => {
+          const subKind = new URLSearchParams(sub.href.split("?")[1] ?? "").get("type") as DocumentKind | null;
+          const subLocked = !!subKind && !planIncludes(effectivePlan(agent), subKind);
+          const on = subItemActive(item.key, sub.href, pathname, currentType);
+          return (
+            <DropdownMenuItem
+              key={sub.href}
+              onSelect={() => router.push(subLocked ? "/dashboard/pricing" : sub.href)}
+              className={cn("cursor-pointer items-start gap-3 rounded-xl py-2.5", on && "bg-brand-50")}
+            >
+              <span className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", subLocked ? "bg-slate-100 text-slate-400" : toneFor(item).chip)}>
+                <sub.icon className="h-4 w-4" />
+              </span>
+              <span className="min-w-0">
+                <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+                  {sub.label}
+                  {subLocked && subKind ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">
+                      <Lock className="h-3 w-3" /> {planName(lowestPlanFor(subKind))}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="block text-xs text-slate-500">{sub.description}</span>
+              </span>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+const divider = <span aria-hidden className="mx-1.5 h-10 w-px bg-slate-200" />;
 
 export default function AgentNavbar() {
   const { agent } = useAgent();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const currentType = searchParams.get("type");
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(() => {
-    try {
-      return typeof window !== "undefined" && localStorage.getItem(COLLAPSE_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
   // Close the drawer after navigating (adjusting state during render, not in an effect).
   const route = `${pathname}?${searchParams.toString()}`;
   const [lastRoute, setLastRoute] = useState(route);
@@ -391,17 +456,7 @@ export default function AgentNavbar() {
     setMobileOpen(false);
   }
 
-  // The page content is offset by the sidebar width (DashboardShell reads --sidebar-w).
-  useEffect(() => {
-    document.documentElement.style.setProperty("--sidebar-w", collapsed ? "4rem" : "16rem");
-    try {
-      localStorage.setItem(COLLAPSE_KEY, collapsed ? "1" : "0");
-    } catch {
-      /* ignore */
-    }
-  }, [collapsed]);
-
-  // "/" or Ctrl/⌘+K opens search (not while typing in a field); Ctrl/⌘+B toggles the sidebar.
+  // "/" or Ctrl/⌘+K opens search (not while typing in a field).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
@@ -409,10 +464,6 @@ export default function AgentNavbar() {
       if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || (e.key === "/" && !typing)) {
         e.preventDefault();
         setSearchOpen(true);
-      }
-      if (e.key === "b" && (e.metaKey || e.ctrlKey) && !typing) {
-        e.preventDefault();
-        setCollapsed((v) => !v);
       }
       if (e.key === "Escape") setMobileOpen(false);
     };
@@ -422,28 +473,17 @@ export default function AgentNavbar() {
 
   if (!agent) return null;
 
-  const onDashboard = pathname === "/dashboard";
-  const current = visibleNavItems(agent).find((i) => i.key !== "home" && isItemActive(i, pathname));
-  const title = onDashboard
-    ? `Welcome back, ${displayName(agent).split(" ")[0]}`
-    : current?.label ?? ACCOUNT_LINKS.find((l) => pathname.startsWith(l.href))?.label ?? "Dashboard";
-  const active = isActive(agent.status);
-  const suspended = isSuspended(agent.status);
-  const toggle = () => {
-    if (window.matchMedia("(min-width: 1024px)").matches) setCollapsed((v) => !v);
-    else setMobileOpen(true);
-  };
+  const items = visibleNavItems(agent);
+  const home = items.find((i) => i.key === "home");
+  const services = items.filter((i) => i.kind);
+  const pricing = items.find((i) => i.key === "pricing");
+  const plan = agent.subscription?.plan ?? agent.subscriptionPlan;
 
   return (
     <>
-      {/* Desktop sidebar */}
-      <aside className={cn("glass-nav fixed inset-y-0 left-0 z-40 hidden border-r transition-[width] duration-200 lg:block", collapsed ? "w-16" : "w-64")}>
-        <SidebarContent agent={agent} collapsed={collapsed} />
-      </aside>
-
-      {/* Mobile drawer */}
+      {/* Tablet & phone drawer */}
       {mobileOpen ? (
-        <div className="fixed inset-0 z-[60] lg:hidden">
+        <div className="fixed inset-0 z-[60] xl:hidden">
           <div className="anim-fade absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={() => setMobileOpen(false)} aria-hidden />
           <aside className="anim-drawer absolute inset-y-0 left-0 w-[17rem] max-w-[85vw] border-r border-slate-200 bg-white shadow-2xl">
             <SidebarContent agent={agent} onClose={() => setMobileOpen(false)} />
@@ -451,47 +491,52 @@ export default function AgentNavbar() {
         </div>
       ) : null}
 
-      {/* Header */}
-      <header className="glass-nav sticky top-0 z-30 border-b transition-[padding] duration-200 lg:pl-[var(--sidebar-w,16rem)]">
-        <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
+      <header className="sticky top-0 z-40 border-b-2 border-[var(--primary)] bg-white shadow-sm shadow-slate-900/5">
+        <div className="mx-auto flex h-[72px] max-w-[1760px] items-center gap-3 px-4 sm:px-6 xl:h-[84px] xl:px-10">
           <button
             type="button"
-            onClick={toggle}
-            aria-label="Toggle navigation"
-            aria-expanded={mobileOpen || !collapsed}
-            title="Toggle sidebar (Ctrl B)"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+            aria-expanded={mobileOpen}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-brand-50 hover:text-[var(--primary)] xl:hidden"
           >
-            <PanelLeft className="h-[18px] w-[18px]" />
+            <Menu className="h-5 w-5" />
           </button>
-          <span aria-hidden className="hidden h-5 w-px bg-slate-200 sm:block" />
-          <div className="flex min-w-0 items-center gap-2">
-            <p className="truncate text-lg font-semibold text-black">{title}</p>
-            {onDashboard ? (
-              <span className="hidden items-center gap-1.5 md:flex">
-                <Badge variant={active ? "success" : suspended ? "destructive" : "secondary"} title={statusTooltip(agent)}>
-                  {statusLabel(agent.status)}
-                </Badge>
-                <Badge variant={agent.isVerified ? "info" : "warning"} title={verifyTooltip(agent)}>
-                  {agent.isVerified ? "Verified" : agent.partnerType === "other" ? "In review" : "Not verified"}
-                </Badge>
-              </span>
-            ) : null}
-          </div>
+          <Link href="/dashboard" className="flex min-w-0 items-center gap-2.5" aria-label="Vouchlio dashboard">
+            <BrandMark className="h-10" />
+            <span className="truncate text-lg font-bold tracking-tight text-slate-900">Vouchlio</span>
+          </Link>
 
-          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-            <button type="button" onClick={() => setSearchOpen(true)} aria-label="Search documents" title="Search (/ or Ctrl+K)" className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100">
-              <Search className="h-[18px] w-[18px]" />
+          <nav aria-label="Main" className="ml-auto hidden items-center gap-0.5 xl:flex">
+            {home ? <TopNavItem item={home} agent={agent} pathname={pathname} currentType={currentType} /> : null}
+            {services.length ? divider : null}
+            {services.map((item) => (
+              <TopNavItem key={item.key} item={item} agent={agent} pathname={pathname} currentType={currentType} />
+            ))}
+            {pricing ? divider : null}
+            {pricing ? <TopNavItem item={pricing} agent={agent} pathname={pathname} currentType={currentType} /> : null}
+          </nav>
+
+          <div className="ml-auto flex items-center gap-1 xl:ml-3">
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search documents"
+              title="Search (/ or Ctrl+K)"
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 hover:bg-brand-50 hover:text-[var(--primary)]"
+            >
+              <Search className="h-5 w-5" />
             </button>
             <NotificationBell />
-            <SupportMenu />
-            <span aria-hidden className="mx-0.5 hidden h-6 w-px bg-slate-200 sm:block" />
-            <PlanBadge plan={agent.subscription?.plan ?? agent.subscriptionPlan} className="hidden sm:inline-flex" />
-            <div className="flex h-9 items-center">
+            <span className="hidden sm:flex">
+              <SupportMenu />
+            </span>
+            <span className="ml-1 flex items-center gap-2 rounded-full bg-slate-50 p-1 pr-1.5 ring-1 ring-slate-200">
               <AccountMenu agent={agent}>
-                <AgentAvatar agent={agent} size={36} />
+                <AgentAvatar agent={agent} size={38} />
               </AccountMenu>
-            </div>
+              <PlanBadge plan={plan} className="hidden h-8 sm:inline-flex" />
+            </span>
           </div>
         </div>
       </header>

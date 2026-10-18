@@ -43,7 +43,6 @@ const daily = (id: string, test: RateRule["test"], limit: number, scope: RateRul
 const DAILY_RULES: RateRule[] = [
   daily("signup:ip", (p, m) => p === "/api/auth/signup" && m === "POST", 10, "ip"),
   daily("contact:ip", (p, m) => p === "/api/contact" && m === "POST", 20, "ip"),
-  daily("extract:ip", (p, m) => p === "/api/agent/extract" && m === "POST", 60, "ip"),
   daily("documents:create", (p, m) => p === "/api/agent/documents" && m === "POST", 300, "user"),
   daily("documents:update", (p, m) => /^\/api\/agent\/documents\/[^/]+$/.test(p) && m === "PATCH", 1500, "user"),
   daily("payments:create", (p, m) => /^\/api\/agent\/documents\/[^/]+\/payments$/.test(p) && m === "POST", 300, "user"),
@@ -83,7 +82,6 @@ export const RATE_RULES: RateRule[] = [
   // Public contact form — stops spam floods.
   { id: "contact", test: (p, m) => p === "/api/contact" && m === "POST", limit: 5, windowSeconds: FIFTEEN_MIN, store: "db", scope: "ip" },
   // Expensive endpoints.
-  { id: "extract", test: (p, m) => p === "/api/agent/extract" && m === "POST", limit: 10, windowSeconds: 60, store: "memory", scope: "user" },
   { id: "export", test: (p) => p === "/api/agent/invoices/export", limit: 10, windowSeconds: 60, store: "memory", scope: "user" },
   { id: "pdf", test: (p) => /^\/api\/agent\/documents\/[^/]+\/pdf$/.test(p), limit: 60, windowSeconds: 60, store: "memory", scope: "user" },
   // Live form previews re-render about a second after typing stops.

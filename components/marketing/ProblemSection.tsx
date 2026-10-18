@@ -13,7 +13,7 @@ const PAINS: { pain: string; fix: string; icon: LucideIcon }[] = [
   { pain: "Recreating the same documents for every booking", fix: "Your business details fill in automatically on every document", icon: Repeat },
   { pain: "Switching between Word, Excel and PDF tools", fix: "Create, preview and download every PDF in one place", icon: ArrowLeftRight },
   { pain: "Maintaining templates across different formats", fix: "One ready-made template for each of 8 document types", icon: Layers },
-  { pain: "Typing customer and booking details again and again", fix: "Save customers once, or upload a voucher to auto-fill", icon: Keyboard },
+  { pain: "Typing customer and booking details again and again", fix: "Save customers once and pick them from your directory", icon: Keyboard },
   { pain: "Losing time formatting and fixing layouts", fix: "Layouts are done for you, so you only fill in the details", icon: AlignLeft },
   { pain: "Sending documents that all look different", fix: "Every PDF carries your logo, stamp and business details", icon: Shuffle },
 ];

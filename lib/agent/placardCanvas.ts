@@ -1,6 +1,7 @@
 "use client";
 
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { COPYRIGHT } from "@/lib/pdf/copyright";
 import type { Agent } from "./types";
 import { PLACARD_FONTS, PLACARD_THEMES, type PlacardCustom, type PlacardData, type PlacardTheme } from "./documents";
 
@@ -158,17 +159,22 @@ function ornamentLine(ctx: CanvasRenderingContext2D, cx: number, y: number, widt
   ctx.fill();
 }
 
-export async function drawPlacard(canvas: HTMLCanvasElement, d: PlacardData, agent: Agent) {
+/**
+ * Draw the placard. Fonts and images load before the canvas is touched, so the live preview never
+ * flashes blank; `isStale` lets a newer draw win when an older one is still loading.
+ */
+export async function drawPlacard(canvas: HTMLCanvasElement, d: PlacardData, agent: Agent, isStale?: () => boolean) {
   const s = resolveStyle(d);
   const dims = isLandscape(d.theme) ? LANDSCAPE : PORTRAIT;
+  await ensureFonts(s);
+  const [logo, bg] = await Promise.all([loadImage(agent.brandLogo ?? ""), loadImage(s.backgroundImage, true)]);
+  if (isStale?.()) return;
   canvas.width = dims.w;
   canvas.height = dims.h;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   const { w, h } = dims;
   const gap = s.spacing === "compact" ? 0.8 : s.spacing === "relaxed" ? 1.25 : 1;
-  await ensureFonts(s);
-  const [logo, bg] = await Promise.all([loadImage(agent.brandLogo ?? ""), loadImage(s.backgroundImage, true)]);
 
   // Background
   if (s.gradient) {
@@ -352,11 +358,17 @@ export async function placardPdf(d: PlacardData, agent: Agent): Promise<Blob> {
   await drawPlacard(c, d, agent);
   const png = new Uint8Array(await (await canvasBlob(c)).arrayBuffer());
   const pdf = await PDFDocument.create();
-  pdf.setTitle(`Welcome placard - ${d.guestName}`);
+  pdf.setTitle(`Welcome placard – ${d.guestName}`);
   const land = isLandscape(d.theme);
   const page = pdf.addPage(land ? [841.89, 595.28] : [595.28, 841.89]);
   const img = await pdf.embedPng(png);
   page.drawImage(img, { x: 0, y: 0, width: page.getWidth(), height: page.getHeight() });
+  // "© Vouchlio.com" at the bottom, on a light strip so it reads on dark themes too.
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  const w = font.widthOfTextAtSize(COPYRIGHT, 7);
+  const x = (page.getWidth() - w) / 2;
+  page.drawRectangle({ x: x - 6, y: 4, width: w + 12, height: 13, color: rgb(1, 1, 1), opacity: 0.8 });
+  page.drawText(COPYRIGHT, { x, y: 8, size: 7, font, color: rgb(0.39, 0.45, 0.55) });
   const bytes = await pdf.save();
   return new Blob([bytes as BlobPart], { type: "application/pdf" });
 }

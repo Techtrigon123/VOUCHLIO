@@ -80,11 +80,12 @@ describe("subscriptionState", () => {
     const s = subscriptionState({ subscriptionPlan: "gold", subscriptionCycle: "monthly", subscriptionExpiresAt: new Date(NOW - 1 * DAY) }, NOW);
     expect(s.status).toBe("grace");
     expect(s.plan).toBe("gold"); // still usable
-    expect(s.daysLeft).toBe(GRACE_DAYS.monthly - 1);
+    expect(s.daysLeft).toBe(GRACE_DAYS.gold.monthly - 1);
   });
 
   it("yearly plans get a longer grace period than monthly ones", () => {
-    const ended = { subscriptionPlan: "platinum", subscriptionExpiresAt: new Date(NOW - 3 * DAY) };
+    // Platinum: 5 grace days monthly, 10 yearly — so 6 days after the end only a yearly plan is still in grace.
+    const ended = { subscriptionPlan: "platinum", subscriptionExpiresAt: new Date(NOW - 6 * DAY) };
     expect(subscriptionState({ ...ended, subscriptionCycle: "monthly" }, NOW).status).toBe("lapsed");
     expect(subscriptionState({ ...ended, subscriptionCycle: "yearly" }, NOW).status).toBe("grace");
   });

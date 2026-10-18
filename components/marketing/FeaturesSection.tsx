@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { BedDouble, Car, ChevronLeft, ChevronRight, FileText, Landmark, Pause, Play, Plane, ReceiptText, Route, Signpost, UploadCloud, type LucideIcon } from "lucide-react";
+import { BedDouble, Car, ChevronLeft, ChevronRight, FileText, Landmark, Pause, Play, Plane, ReceiptText, Route, Signpost, Eye, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /*
@@ -30,7 +30,7 @@ const SLIDES: Slide[] = [
   { title: "GST Invoices", category: "Billing", tagline: "CGST, SGST and IGST worked out for you, with payments tracked", icon: Landmark, image: img("photo-1517245386807-bb43f82c33c4") },
   { title: "Proforma Invoices", category: "Quotes", tagline: "Priced quotations your customer approves before paying", icon: FileText, image: img("photo-1586281380349-632531db7ed4") },
   { title: "Payment Receipts", category: "Payments", tagline: "Proof of every payment, linked to its invoice", icon: ReceiptText, image: img("photo-1556742049-0cfed4f6a45d") },
-  { title: "Upload Auto-fill", category: "Automation", tagline: "Drop in a voucher or e-ticket and the form fills itself", icon: UploadCloud, image: img("photo-1499951360447-b19be8fe80f5") },
+  { title: "Live PDF Preview", category: "Preview", tagline: "See the finished PDF update as you type, before you save", icon: Eye, image: img("photo-1499951360447-b19be8fe80f5") },
 ];
 
 /** Time each slide stays before the next one slides in. */

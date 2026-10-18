@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   if (!authorized(req)) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   try {
     const now = Date.now();
-    const graceMax = Math.max(...Object.values(GRACE_DAYS));
+    const graceMax = Math.max(...Object.values(GRACE_DAYS).flatMap((c) => Object.values(c)));
     // Plans ending from "grace period already running" up to the reminder window.
     const { data, error } = await db()
       .from("users")

@@ -34,6 +34,7 @@ import {
 import type { DocumentSummary } from "@/lib/agent/types";
 import { FormSkeleton } from "@/components/agent/skeletons";
 import { LivePreview } from "@/components/agent/LivePreview";
+import { EditorLayout, LayoutPicker, SaveBar } from "@/components/agent/editor";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -113,12 +114,11 @@ export default function PickupEditorPage() {
   const isRail = data.pickupFrom === "Railway Station";
 
   return (
-    <PageShell wide>
+    <PageShell full>
       <PageHeader
-        back={{ href: "/dashboard/pickup", label: "Saved Vouchers" }}
-        eyebrow="Transport Voucher"
-        title={docId ? "Edit Pickup Voucher" : "Create Pickup Voucher"}
-        description="Fill guest, pickup, and driver details. Your agency name and logo are added to the PDF automatically from your profile."
+        back={{ href: "/dashboard/pickup", label: "Saved pickup vouchers" }}
+        title={docId ? "Edit pickup voucher" : "New pickup voucher"}
+        description="Fill guest, pickup and driver details. Your agency name and logo are added to the PDF automatically from your profile."
       />
 
       {agencyMissing ? (
@@ -127,8 +127,30 @@ export default function PickupEditorPage() {
         </p>
       ) : null}
 
-      <div className="grid gap-5 xl:grid-cols-[1fr_380px]">
-        <div className="space-y-5">
+      <EditorLayout
+        preview={<LivePreview kind="pickup_voucher" data={data} variant="panel" />}
+        form={
+        <>
+          <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-4 sm:flex-row sm:items-center sm:gap-6">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-slate-500">Voucher No.</span>
+              <span className="font-mono text-sm font-semibold text-slate-800">{data.voucherNumber}</span>
+              <button type="button" aria-label="Copy voucher number" onClick={() => { void navigator.clipboard.writeText(data.voucherNumber); toast.success("Copied"); }} className="text-slate-400 hover:text-brand-600">
+                <Copy className="h-4 w-4" />
+              </button>
+              <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", dirty ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700")}>{dirty ? "Unsaved changes" : "Saved"}</span>
+            </div>
+            <div className="flex-1">
+              <div className="flex justify-between text-xs font-medium text-slate-500">
+                <span>Form progress</span>
+                <span className="tabular-nums">{progress.done}/{progress.total}</span>
+              </div>
+              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-brand-100">
+                <div className="h-full rounded-full bg-[var(--primary)] transition-all" style={{ width: `${progress.percent}%` }} />
+              </div>
+            </div>
+          </div>
+
           <SectionCard title="Guest Details" description="Who is travelling" icon={UserRound}>
             <div className="grid gap-4 md:grid-cols-[130px_1fr_auto]">
               <Field label="Title">
@@ -244,52 +266,21 @@ export default function PickupEditorPage() {
               <TextArea rows={3} value={data.instructions} onChange={(e) => patch({ instructions: e.target.value })} placeholder="Please wait at the arrival gate with your name board. Call the driver if you cannot find the vehicle." />
             </Field>
           </SectionCard>
-        </div>
 
-        {/* Sticky on wide screens; scrolls on its own when the panel is taller than the window. */}
-        <aside className="space-y-4 xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto xl:pb-2" aria-label="Pickup Voucher Actions">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-900">Pickup Voucher</p>
-              <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", dirty ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700")}>{dirty ? "Unsaved changes" : "Saved"}</span>
-            </div>
-            <div className="mt-2 flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
-              <span className="flex-1 font-mono text-sm font-semibold text-slate-800">{data.voucherNumber}</span>
-              <button type="button" aria-label="Copy Voucher Number" onClick={() => { void navigator.clipboard.writeText(data.voucherNumber); toast.success("Copied"); }} className="text-slate-400 hover:text-brand-600">
-                <Copy className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="mt-4">
-              <div className="flex justify-between text-xs font-medium text-slate-500">
-                <span>Form Progress</span>
-                <span className="tabular-nums">{progress.done}/{progress.total}</span>
-              </div>
-              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-brand-100">
-                <div className="h-full rounded-full bg-[var(--primary)] transition-all" style={{ width: `${progress.percent}%` }} />
-              </div>
-            </div>
-          </div>
+          <SectionCard title="PDF layout" description="Choose how the voucher looks when you download or share it.">
+            <LayoutPicker options={PICKUP_LAYOUTS} value={data.layout} onChange={(v) => patch({ layout: v })} />
+          </SectionCard>
 
-          <LivePreview kind="pickup_voucher" data={data} />
-
-          <div className="rounded-3xl border border-slate-200 bg-white p-5">
-            <p className="text-sm font-semibold text-slate-900">PDF Layout</p>
-            <div className="mt-3 grid gap-2">
-              {PICKUP_LAYOUTS.map((l) => (
-                <button key={l.id} type="button" onClick={() => patch({ layout: l.id })} className={cn("rounded-2xl border px-3 py-2.5 text-left", data.layout === l.id ? "border-brand-300 bg-brand-50" : "border-slate-200 hover:border-brand-200")}>
-                  <p className="text-sm font-semibold text-slate-900">{l.label}</p>
-                  <p className="text-xs text-slate-500">{l.description}</p>
-                </button>
-              ))}
-            </div>
-            <button type="button" onClick={generate} disabled={busy} className={cn(primaryBtn, "mt-4 h-11 w-full")}>
+          <SaveBar description="Save your pickup voucher — we generate the PDF so you can download or share it.">
+            <Link href="/dashboard/pickup" className={secondaryBtn}>Saved vouchers</Link>
+            <button type="button" onClick={generate} disabled={busy} className={cn(primaryBtn, "h-11 px-6")}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-              {busy ? "Generating…" : "Save & Generate PDF"}
+              {busy ? "Generating…" : "Save & generate PDF"}
             </button>
-            <Link href="/dashboard/pickup" className={cn(secondaryBtn, "mt-2 w-full")}>Saved Vouchers</Link>
-          </div>
-        </aside>
-      </div>
+          </SaveBar>
+        </>
+        }
+      />
     </PageShell>
   );
 }

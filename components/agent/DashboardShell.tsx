@@ -33,7 +33,7 @@ function Gate({ children }: { children: React.ReactNode }) {
         <div className="min-h-screen bg-slate-50">
           <Suspense
             fallback={
-              <div className="flex h-16 items-center border-b border-slate-200 bg-white px-4 sm:px-6 lg:pl-[17rem]">
+              <div className="flex h-[72px] items-center border-b-2 border-[var(--primary)] bg-white px-4 sm:px-6 xl:h-[84px] xl:px-10">
                 <Skeleton className="h-8 w-36" />
               </div>
             }
@@ -42,7 +42,7 @@ function Gate({ children }: { children: React.ReactNode }) {
           </Suspense>
           <UpgradePopup />
           <RenewalPopup />
-          <main className="pb-28 transition-[padding] duration-200 lg:pl-[var(--sidebar-w,16rem)]">
+          <main className="pb-28">
             <Suspense fallback={<PageBodySkeleton />}>{children}</Suspense>
           </main>
           {/* Pinned to the bottom; main's pb-28 keeps the last content clear of it. */}

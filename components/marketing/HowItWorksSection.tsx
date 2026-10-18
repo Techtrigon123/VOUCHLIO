@@ -52,7 +52,7 @@ function DetailsDemo() {
         </div>
       ))}
       <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-600">
-        <Sparkles className="h-3 w-3" /> Auto-filled from upload
+        <Sparkles className="h-3 w-3" /> Filled from your saved customer
       </span>
     </div>
   );
@@ -103,7 +103,7 @@ function ShareDemo() {
 
 const steps: Step[] = [
   { number: 1, icon: FileText, title: "Choose a document", description: "Pick the travel document you need — voucher, itinerary, ticket, transfer, placard or invoice.", demo: <ChooseDemo /> },
-  { number: 2, icon: Pencil, title: "Enter your details", description: "Add booking, customer and pricing details — or upload a voucher or e-ticket to fill the form for you.", demo: <DetailsDemo /> },
+  { number: 2, icon: Pencil, title: "Enter your details", description: "Add booking, customer and pricing details — pick saved customers in one tap and watch the PDF update as you type.", demo: <DetailsDemo /> },
   { number: 3, icon: Eye, title: "Review your document", description: "Check everything in the preview before you create the final PDF.", demo: <ReviewDemo /> },
   { number: 4, icon: Download, title: "Generate and share", description: "Download a professional PDF, print it, or share it with your customer.", demo: <ShareDemo /> },
 ];

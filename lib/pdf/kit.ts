@@ -33,20 +33,15 @@ export function tint(c: RGB, amount = 0.9): RGB {
 }
 
 /**
- * Standard PDF fonts only cover WinAnsi. Swap common symbols and drop anything
- * else so a stray emoji or ₹ never breaks generation.
+ * Standard PDF fonts only cover WinAnsi. Swap the symbols they lack (₹, →) and drop anything
+ * else so a stray emoji never breaks generation. Dashes, curly quotes, …, •, · and € are kept.
  */
 export function clean(text: unknown): string {
   return String(text ?? "")
     .replace(/₹/g, "INR ")
-    .replace(/[“”]/g, '"')
-    .replace(/[‘’]/g, "'")
-    .replace(/[–—]/g, "-")
     .replace(/→/g, "->")
-    .replace(/…/g, "...")
-    .replace(/·/g, "-")
     .replace(/\t/g, " ")
-    .replace(/[^\x20-\x7E\n -ÿ]/g, "");
+    .replace(/[^\x20-\x7E\n -ÿ–—“”‘’…•€]/g, "");
 }
 
 export interface Fonts {
@@ -157,13 +152,18 @@ export function wrap(text: string, font: PDFFont, size: number, maxWidth: number
         continue;
       }
       if (line) out.push(line);
-      // Hard-break words longer than the column.
+      // Hard-break words longer than the column (binary search keeps long pasted links fast).
       let word = w;
       while (font.widthOfTextAtSize(word, size) > maxWidth && word.length > 1) {
-        let cut = word.length - 1;
-        while (cut > 1 && font.widthOfTextAtSize(word.slice(0, cut), size) > maxWidth) cut--;
-        out.push(word.slice(0, cut));
-        word = word.slice(cut);
+        let lo = 1;
+        let hi = word.length - 1;
+        while (lo < hi) {
+          const mid = Math.ceil((lo + hi) / 2);
+          if (font.widthOfTextAtSize(word.slice(0, mid), size) <= maxWidth) lo = mid;
+          else hi = mid - 1;
+        }
+        out.push(word.slice(0, lo));
+        word = word.slice(lo);
       }
       line = word;
     }
@@ -181,7 +181,7 @@ export function text(
 ): number {
   const size = opts.size ?? 10;
   const font = opts.font ?? c.fonts.regular;
-  const lines = opts.maxWidth ? wrap(String(value ?? ""), font, size, opts.maxWidth) : [clean(value)];
+  const lines = opts.maxWidth ? wrap(String(value ?? ""), font, size, opts.maxWidth) : [clean(value).replace(/\n+/g, " ")];
   let cy = y;
   for (const line of lines) {
     let dx = x;
@@ -354,7 +354,7 @@ export function paragraph(c: Ctx, value: string, opts: { size?: number; color?: 
     text(c, line, MARGIN, c.y, { size, color: opts.color ?? INK, font: opts.font });
     c.y -= size + 3;
   }
-  c.y -= 4;
+  c.y -= 10;
 }
 
 export function numberedList(c: Ctx, lines: string[], size = 8) {
@@ -369,6 +369,8 @@ export function numberedList(c: Ctx, lines: string[], size = 8) {
 
 /** Credit on free (Silver) documents: the diagonal watermark and the footer line. */
 export const FREE_PLAN_CREDIT = "Powered by Vouchlio";
+export { COPYRIGHT } from "./copyright";
+import { COPYRIGHT } from "./copyright";
 const BRAND_RED = rgb(0.9, 0.22, 0.27);
 
 /**
@@ -413,13 +415,16 @@ export async function finish(c: Ctx): Promise<Uint8Array> {
     }
 
     // Left: the document's own footer, shortened so it never runs into the right-hand text.
-    let footer = clean(c.footer || agencyName(c.agent));
+    let footer = clean(c.footer || agencyName(c.agent)).replace(/\n+/g, " ");
     const room = rx - MARGIN - 16;
     if (size7(footer) > room) {
       while (footer.length > 1 && size7(`${footer}...`) > room) footer = footer.slice(0, -1);
       footer = `${footer.trimEnd()}...`;
     }
     p.drawText(footer, { x: MARGIN, y: 20, size: 7, font: c.fonts.regular, color: GREY });
+
+    // Bottom line, centred on every page of every document.
+    p.drawText(COPYRIGHT, { x: (width - size7(COPYRIGHT)) / 2, y: 9, size: 7, font: c.fonts.regular, color: GREY });
   });
   return c.pdf.save();
 }

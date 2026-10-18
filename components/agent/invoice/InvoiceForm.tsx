@@ -354,7 +354,7 @@ export function InvoiceForm({
         </div>
       </SectionCard>
 
-      <LivePreview kind={data.docType} data={data} className="mx-auto w-full max-w-2xl" />
+      <LivePreview kind={data.docType} data={data} documentId={docId} className="mx-auto w-full max-w-2xl" />
 
       {showChecklist && checklist.length ? (
         <div id="invoice-checklist" role="alert" className="rounded-3xl border border-rose-200 bg-rose-50 p-4">

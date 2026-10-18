@@ -64,6 +64,7 @@ import {
 import type { DocumentSummary } from "@/lib/agent/types";
 import { FormSkeleton } from "@/components/agent/skeletons";
 import { LivePreview } from "@/components/agent/LivePreview";
+import { EditorLayout, LayoutPicker, SaveBar } from "@/components/agent/editor";
 
 const COLOURS = ["#0f766e", "#1d4ed8", "#7c2d12", "#be123c", "#6d28d9", "#0f172a"];
 
@@ -192,12 +193,11 @@ export default function ItineraryBuilderPage() {
   };
 
   return (
-    <PageShell wide>
+    <PageShell full>
       <PageHeader
         back={{ href: "/dashboard/itineraries", label: "Itineraries" }}
-        eyebrow="Itinerary builder"
-        title={docId ? "Edit itinerary" : "Build an itinerary"}
-        description="Plan the trip day by day. The preview updates as you type, and the checklist shows what's left."
+        title={docId ? "Edit itinerary" : "New itinerary"}
+        description="Plan the trip day by day. The preview updates as you type. Required fields are marked *. Save when you are ready to download or share the PDF."
       />
 
       {agencyMissing ? (
@@ -206,8 +206,11 @@ export default function ItineraryBuilderPage() {
         </p>
       ) : null}
 
-      <div className="grid gap-5 xl:grid-cols-[1fr_380px]">
-        <div className="space-y-5">
+      <EditorLayout
+        preview={<LivePreview kind="itinerary" data={data} variant="panel" />}
+        form={
+        <>
+          <FormProgress steps={steps} />
           <SectionCard id="itn-trip" title="Trip details" icon={MapPinned}>
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Trip name" htmlFor="itn-title" required className="md:col-span-2" hint="The headline on the PDF — e.g. “Magical Goa: Beaches & Forts”.">
@@ -320,27 +323,11 @@ export default function ItineraryBuilderPage() {
           </SectionCard>
 
           <SectionCard title="PDF style" description="Pick a layout, then a colour for headings and highlights." icon={Palette}>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {ITINERARY_TEMPLATES.map((t) => {
-                const on = data.template === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => patch({ template: t.id, color: t.color })}
-                    className={cn("rounded-2xl border p-3 text-left transition", on ? "border-brand-400 ring-4 ring-brand-100" : "border-slate-200 hover:border-brand-200")}
-                  >
-                    <span className="flex items-center justify-between">
-                      <span className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                        <span className="h-3 w-3 rounded-full" style={{ background: on ? data.color : t.color }} /> {t.label}
-                      </span>
-                      {on ? <Check className="h-4 w-4 text-brand-500" /> : null}
-                    </span>
-                    <span className="mt-1 block text-xs leading-snug text-slate-500">{t.description}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <LayoutPicker
+              options={ITINERARY_TEMPLATES.map((t) => ({ ...t, color: t.id === data.template ? data.color : t.color }))}
+              value={data.template}
+              onChange={(id) => patch({ template: id, color: ITINERARY_TEMPLATES.find((t) => t.id === id)?.color ?? data.color })}
+            />
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <span className="mr-1 text-sm font-medium text-slate-700">Colour</span>
               {COLOURS.map((c) => (
@@ -359,32 +346,27 @@ export default function ItineraryBuilderPage() {
               </label>
             </div>
           </SectionCard>
-        </div>
 
-        {/* Sticky on wide screens; scrolls on its own when the panel is taller than the window. */}
-        <aside className="space-y-4 xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto xl:pb-2" aria-label="Itinerary progress, preview and download">
-          <FormProgress steps={steps} />
-          <LivePreview kind="itinerary" data={data} />
-          <div id="itn-generate" className="scroll-mt-28 rounded-3xl border border-brand-200 bg-white p-5">
-            <Field label="Prepared by" htmlFor="itn-prepared" required hint="Your name, printed at the end of the itinerary.">
+          <SectionCard id="itn-generate" title="Prepared by" description="Your name, printed at the end of the itinerary.">
+            <Field label="Prepared by" htmlFor="itn-prepared" required>
               <TextInput id="itn-prepared" value={data.preparedBy} onChange={(e) => patch({ preparedBy: e.target.value })} placeholder="Your name" maxLength={80} />
             </Field>
-            <div className="mt-4 grid gap-2">
-              <button type="button" onClick={() => void persist(true)} disabled={!!busy} className={cn(primaryBtn, "h-11 w-full")}>
-                {busy === "pdf" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-                {busy === "pdf" ? "Generating…" : "Save & download PDF"}
-              </button>
-              <button type="button" onClick={() => void persist(false)} disabled={!!busy} className={cn(secondaryBtn, "w-full")}>
-                {busy === "save" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {busy === "save" ? "Saving…" : dirty || !docId ? "Save" : "Saved"}
-              </button>
-            </div>
-            {docId ? (
-              <Link href="/dashboard/itineraries" className="mt-3 block text-center text-xs font-medium text-slate-500 hover:text-brand-600">Back to your itineraries</Link>
-            ) : null}
-          </div>
-        </aside>
-      </div>
+          </SectionCard>
+
+          <SaveBar description="Save your itinerary — we generate the PDF so you can download or share it.">
+            {docId ? <Link href="/dashboard/itineraries" className={secondaryBtn}>Your itineraries</Link> : null}
+            <button type="button" onClick={() => void persist(false)} disabled={!!busy} className={secondaryBtn}>
+              {busy === "save" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {busy === "save" ? "Saving…" : dirty || !docId ? "Save" : "Saved"}
+            </button>
+            <button type="button" onClick={() => void persist(true)} disabled={!!busy} className={cn(primaryBtn, "h-11 px-6")}>
+              {busy === "pdf" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+              {busy === "pdf" ? "Generating…" : "Save & download PDF"}
+            </button>
+          </SaveBar>
+        </>
+        }
+      />
     </PageShell>
   );
 }

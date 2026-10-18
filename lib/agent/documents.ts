@@ -815,7 +815,19 @@ export const newLine = (): InvoiceLine => ({ description: "", qty: "1", rate: ""
 export const today = () => new Date().toISOString().slice(0, 10);
 
 export const DEFAULT_TERMS =
+  "Please make the payment by the date agreed with us.\nPlease quote the document number on all payments.";
+export const RECEIPT_TERMS =
+  "This receipt confirms the payment received against the document mentioned above.\nPlease keep it for your records.";
+/** The starter terms before October 2026: they mention a due date the documents don't have, and suit no receipt. */
+export const LEGACY_DEFAULT_TERMS =
   "Payment is due as per the due date on this document.\nPlease quote the document number on all payments.";
+
+/** Terms to print: documents still carrying the old starter text get the current one for their type. */
+export function termsFor(kind: InvoiceKind, terms: string | undefined): string {
+  const t = (terms ?? "").trim();
+  if (t.replace(/\r/g, "") !== LEGACY_DEFAULT_TERMS) return t;
+  return kind === "receipt" ? RECEIPT_TERMS : DEFAULT_TERMS;
+}
 
 export const defaultInvoice = (docType: InvoiceKind): InvoiceData => ({
   docType,
@@ -827,7 +839,7 @@ export const defaultInvoice = (docType: InvoiceKind): InvoiceData => ({
   showCustomerGst: true,
   items: [newLine()],
   notes: "Thanks for your business with us.",
-  terms: DEFAULT_TERMS,
+  terms: docType === "receipt" ? RECEIPT_TERMS : DEFAULT_TERMS,
   currency: "INR",
   roundOff: "",
 });

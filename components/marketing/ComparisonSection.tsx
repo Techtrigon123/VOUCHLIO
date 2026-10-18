@@ -8,7 +8,7 @@ const WITH_VOUCHLIO = [
   "Professional, branded documents",
   "Your logo, stamp and colours on every page",
   "Instant PDF export and WhatsApp sharing",
-  "Upload a voucher or ticket and the form fills itself",
+  "Live PDF preview that updates as you type",
   "Dedicated support when you need it",
 ];
 

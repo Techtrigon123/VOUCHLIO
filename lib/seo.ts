@@ -28,7 +28,7 @@ export const organizationLd = {
   "@id": `${SITE.url}/#organization`,
   name: SITE.name,
   url: SITE.url,
-  logo: `${SITE.url}/logo-mark.png`,
+  logo: `${SITE.url}/brand/vouchlio-mark.png`,
   description: SITE.description,
   sameAs: Object.values(SITE.social).filter(Boolean),
 };

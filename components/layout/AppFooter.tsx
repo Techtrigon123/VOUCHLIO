@@ -20,7 +20,7 @@ export default function AppFooter({ className, fixed = false }: { className?: st
     <footer
       className={cn(
         "border-t border-slate-200",
-        fixed && "fixed inset-x-0 bottom-0 z-30 bg-[var(--background)]/90 backdrop-blur-md transition-[left] duration-200 lg:left-[var(--sidebar-w,16rem)]",
+        fixed && "fixed inset-x-0 bottom-0 z-30 bg-[var(--background)]/90 backdrop-blur-md",
         className
       )}
     >

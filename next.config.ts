@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Hide the Next.js "N" dev-tools badge in the corner during development.
   devIndicators: false,
+  // Development only: let other devices on the home Wi-Fi (e.g. a phone opening http://192.168.1.x:3000)
+  // use live reload. Has no effect on the deployed site. Add another address here if your IP changes.
+  allowedDevOrigins: ["192.168.1.3"],
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

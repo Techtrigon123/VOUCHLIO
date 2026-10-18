@@ -37,22 +37,15 @@ export default function ContactPage() {
               Questions about plans, help setting up your agency, or a document that isn&apos;t coming out right —
               send us a message and a real person will get back to you.
             </p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {[
-                { label: "Plans, pricing & general info", email: SITE.infoEmail },
-                { label: "Help with the app", email: SITE.supportEmail },
-              ].map((c) => (
-                <a key={c.email} href={`mailto:${c.email}`} className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 transition hover:border-brand-300">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
-                    <Mail className="h-5 w-5" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-xs text-slate-500">{c.label}</span>
-                    <span className="block truncate text-sm font-semibold text-slate-900 group-hover:text-[var(--primary)]">{c.email}</span>
-                  </span>
-                </a>
-              ))}
-            </div>
+            <a href={`mailto:${SITE.supportEmail}`} className="group mt-6 flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 transition hover:border-brand-300 sm:w-fit sm:pr-6">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                <Mail className="h-5 w-5" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-xs text-slate-500">Email us — plans, pricing or help with the app</span>
+                <span className="block truncate text-sm font-semibold text-slate-900 group-hover:text-[var(--primary)]">{SITE.supportEmail}</span>
+              </span>
+            </a>
             <ul className="mt-8 space-y-5">
               {[
                 { icon: Clock, title: "Replies within one working day", body: "Monday to Saturday, 10 am – 7 pm IST." },

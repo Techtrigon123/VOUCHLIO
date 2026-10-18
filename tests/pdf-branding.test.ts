@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { inflateSync } from "node:zlib";
 import { renderDocumentPdf } from "@/lib/pdf/render";
-import { FREE_PLAN_CREDIT } from "@/lib/pdf/kit";
+import { COPYRIGHT, FREE_PLAN_CREDIT } from "@/lib/pdf/kit";
 import { defaultAirTicket, defaultHotelVoucher, defaultInvoice, defaultItinerary, defaultPickupVoucher } from "@/lib/agent/documents";
 import type { Agent, DocumentKind, PlanId } from "@/lib/agent/types";
 
@@ -30,7 +30,8 @@ function pageText(pdf: Uint8Array): string {
 
 const hasText = (pdf: Uint8Array, text: string) => {
   const content = pageText(pdf);
-  return content.includes(Buffer.from(text).toString("hex").toUpperCase()) || content.includes(`(${text})`);
+  // Standard fonts use WinAnsi, so © is one byte (latin1), not UTF-8.
+  return content.includes(Buffer.from(text, "latin1").toString("hex").toUpperCase()) || content.includes(`(${text})`);
 };
 
 const DOCS: [DocumentKind, unknown][] = [
@@ -48,12 +49,16 @@ describe("PDF branding by plan", () => {
     expect(hasText(await render(kind, data, "silver"), FREE_PLAN_CREDIT)).toBe(true);
   });
 
-  it.each(DOCS)("paid %s has no Vouchlio watermark or credit", async (kind, data) => {
+  it.each(DOCS)("paid %s has no Powered by Vouchlio watermark or credit", async (kind, data) => {
     for (const plan of ["gold", "platinum"] as const) {
       const pdf = await render(kind, data, plan);
       expect(hasText(pdf, FREE_PLAN_CREDIT)).toBe(false);
-      expect(hasText(pdf, "Vouchlio")).toBe(false);
+      expect(hasText(pdf, "Powered by")).toBe(false);
     }
+  });
+
+  it.each(DOCS)("every plan prints the copyright line on %s", async (kind, data) => {
+    for (const plan of ["silver", "gold", "platinum"] as const) expect(hasText(await render(kind, data, plan), COPYRIGHT)).toBe(true);
   });
 
   it("still prints the page number on paid plans", async () => {

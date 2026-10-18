@@ -57,7 +57,7 @@ const PITCH: Record<"gold" | "platinum", { headline: string; lead: string; point
     points: [
       "All 8 services — itinerary builder, receipts, pickup vouchers and welcome placards",
       "Exclusive voucher layouts, colours and fonts",
-      "Unlimited upload auto-fill for vouchers and tickets",
+      "Unlimited new documents with your logo on every PDF",
       "Dedicated onboarding and template revisions",
     ],
   },

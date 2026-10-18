@@ -26,7 +26,7 @@ const footerLinks = {
   Legal: [
     { href: "/privacy", label: "Privacy Policy" },
     { href: "/cookies", label: "Cookie Policy" },
-    { href: "/terms", label: "Terms and Conditions" },
+    { href: "/terms", label: "Terms of Service" },
     { href: "/refunds", label: "Refund Policy" },
   ],
 };
@@ -45,8 +45,8 @@ export default function Footer() {
             <p className="text-sm leading-relaxed max-w-xs text-slate-400">
               Travel document software for travel agents, agencies and tour operators. Create professional travel documents from one centralized workspace.
             </p>
-            <a href={`mailto:${SITE.infoEmail}`} className="mt-4 inline-flex items-center gap-2 text-sm text-slate-300 transition-colors hover:text-brand-neon">
-              <Mail className="h-4 w-4" /> {SITE.infoEmail}
+            <a href={`mailto:${SITE.supportEmail}`} className="mt-4 inline-flex items-center gap-2 text-sm text-slate-300 transition-colors hover:text-brand-neon">
+              <Mail className="h-4 w-4" /> {SITE.supportEmail}
             </a>
             {SOCIAL.length > 0 && (
               <div className="flex items-center gap-3 mt-6">

@@ -8,10 +8,10 @@
 export const SITE = {
   name: "Vouchlio",
   url: (process.env.NEXT_PUBLIC_APP_URL || "https://vouchlio.com").replace(/\/+$/, ""),
+  /** The public address shown to readers (legal pages). Always the live domain, unlike `url`, which follows the environment. */
+  website: "https://vouchlio.com",
   tagline: "Travel document software for travel agents",
-  /** Public inbox for questions about plans, pricing, partnerships and billing (shown on Contact and in the footer). */
-  infoEmail: "info@vouchlio.com",
-  /** Help with the app itself; also the sender of password-reset emails (lib/email.ts). */
+  /** The one public inbox: questions, help, privacy (Contact page, footer, legal pages). Also the sender of password-reset emails (lib/email.ts). */
   supportEmail: "support@vouchlio.com",
   description:
     "Create hotel vouchers, air tickets, travel itineraries, pickup vouchers, welcome placards, GST invoices, proforma invoices and receipts as branded PDFs — built for Indian travel agents, tour operators and DMCs.",
@@ -25,16 +25,16 @@ export const SITE = {
   },
 
   legal: {
-    /** TODO: registered legal name of the business (e.g. "Techtrigon Solutions Pvt Ltd"). */
+    /** Business name shown in the legal pages. */
     entityName: "Vouchlio",
-    /** TODO: registered office address. */
-    address: "Registered office address to be updated",
-    /** TODO: city whose courts have jurisdiction over disputes. */
-    jurisdictionCity: "Mumbai, Maharashtra",
-    /** TODO: Grievance Officer's name and a monitored email address. */
-    grievanceOfficer: "Grievance Officer",
-    grievanceEmail: "info@vouchlio.com",
+    /** Registered office address. */
+    address: "Bengaluru, Karnataka – 560100",
+    /** City whose courts have jurisdiction over disputes. */
+    jurisdictionCity: "Bengaluru, Karnataka",
+    /** Grievance Officer (IT Rules 2011 / DPDP Act 2023) and their monitored inbox. */
+    grievanceOfficer: "Shiny Johnson",
+    grievanceEmail: "support@vouchlio.com",
     /** Date shown as "Last updated" on the legal pages. */
-    lastUpdated: "16 October 2026",
+    lastUpdated: "18 October 2026",
   },
 } as const;

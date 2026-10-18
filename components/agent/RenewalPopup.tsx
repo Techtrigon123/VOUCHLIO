@@ -5,7 +5,7 @@ import Link from "next/link";
 import { AlertTriangle, CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/agent/client";
-import { GRACE_DAYS, planName, renewalReminder, subscriptionState, type RenewalReminder } from "@/lib/agent/plans";
+import { graceDays, planName, renewalReminder, subscriptionState, type RenewalReminder } from "@/lib/agent/plans";
 import { useAgent } from "./AgentProvider";
 import { Modal, primaryBtn, secondaryBtn } from "./ui";
 
@@ -79,7 +79,7 @@ export default function RenewalPopup() {
           <dd className="text-right font-semibold">{fmt(sub.expiresAt)}</dd>
           <dt className="opacity-75">Grace period</dt>
           <dd className="text-right font-semibold">
-            {GRACE_DAYS[sub.cycle]} days · until {fmt(sub.graceEndsAt)}
+            {graceDays(sub.paidPlan, sub.cycle)} days · until {fmt(sub.graceEndsAt)}
           </dd>
         </dl>
       </div>

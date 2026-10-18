@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   BedDouble,
@@ -21,7 +20,6 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAgent } from "@/components/agent/AgentProvider";
-import { ExtractUploader } from "@/components/agent/ExtractUploader";
 import { LogoPromptDialog } from "@/components/agent/LogoPromptDialog";
 import {
   Field,
@@ -58,10 +56,10 @@ import {
   type HotelVoucherData,
   type VoucherRoom,
 } from "@/lib/agent/documents";
-import type { ExtractedVoucher } from "@/lib/agent/extract";
 import type { DocumentSummary } from "@/lib/agent/types";
 import { FormSkeleton } from "@/components/agent/skeletons";
 import { LivePreview } from "@/components/agent/LivePreview";
+import { EditorLayout, SaveBar } from "@/components/agent/editor";
 
 interface Suggestion {
   name: string;
@@ -304,51 +302,6 @@ function RoomCard({
   );
 }
 
-function applyExtract(prev: HotelVoucherData, f: ExtractedVoucher): { data: HotelVoucherData; count: number } {
-  const d = { ...prev };
-  let count = 0;
-  const setStr = (k: keyof HotelVoucherData, v?: string) => {
-    if (v && v.trim()) {
-      (d as unknown as Record<string, unknown>)[k] = v.trim();
-      count++;
-    }
-  };
-  setStr("hotelName", f.hotelName);
-  setStr("hotelAddress", f.hotelAddress);
-  setStr("city", f.city);
-  setStr("hotelEmail", f.hotelEmail);
-  setStr("hotelPhone", f.hotelPhone);
-  setStr("bookingRef", f.bookingRef);
-  setStr("hcn", f.hcn);
-  if (/^\d{4}-\d{2}-\d{2}$/.test(f.checkIn)) setStr("checkIn", f.checkIn);
-  if (/^\d{4}-\d{2}-\d{2}$/.test(f.checkOut)) setStr("checkOut", f.checkOut);
-  if (/^\d{2}:\d{2}$/.test(f.checkInTime)) setStr("checkInTime", f.checkInTime);
-  if (/^\d{2}:\d{2}$/.test(f.checkOutTime)) setStr("checkOutTime", f.checkOutTime);
-  if (GUEST_TITLES.includes(f.guestTitle)) setStr("guestTitle", f.guestTitle);
-  setStr("guestFirstName", f.guestFirstName);
-  setStr("guestLastName", f.guestLastName);
-  setStr("specialRequests", f.specialRequests);
-  setStr("cancellationPolicy", f.cancellationPolicy);
-  const roomsCount = Math.max(1, Math.min(10, Math.round(f.rooms || 1)));
-  const meal = MEAL_PLANS.includes(f.mealPlan) ? f.mealPlan : prev.rooms[0]?.mealPlan ?? "Breakfast";
-  d.rooms = Array.from({ length: roomsCount }, (_, i) => ({
-    ...(prev.rooms[i] ?? newRoom()),
-    roomName: f.roomName || prev.rooms[i]?.roomName || "",
-    adults: f.adultsPerRoom > 0 ? Math.min(10, Math.round(f.adultsPerRoom)) : prev.rooms[i]?.adults ?? 2,
-    children: f.childrenPerRoom > 0 ? Math.min(6, Math.round(f.childrenPerRoom)) : 0,
-    childAges: Array.from({ length: f.childrenPerRoom > 0 ? Math.min(6, Math.round(f.childrenPerRoom)) : 0 }, () => "" as const),
-    mealPlan: meal,
-  }));
-  if (f.roomName) count++;
-  if (f.totalAmount > 0) {
-    d.fareMode = "total";
-    d.total = String(f.totalAmount);
-    if (/^[A-Z]{3}$/.test(f.currency)) d.currency = f.currency;
-    count++;
-  }
-  return { data: d, count };
-}
-
 export default function VoucherEditorPage() {
   const router = useRouter();
   const params = useSearchParams();
@@ -484,29 +437,18 @@ export default function VoucherEditorPage() {
   if (loading || !agent) return <FormSkeleton label="Loading voucher" />;
 
   return (
-    <PageShell wide>
+    <PageShell full>
       <PageHeader
         back={{ href: "/dashboard/vouchers", label: "Back to your voucher PDFs" }}
-        eyebrow="Hotel voucher"
-        title={docId ? "Edit voucher" : "Voucher form"}
-        description="Upload a booking to fill the form for you, or type in the grey boxes. The checklist shows what's left — required fields use *."
+        title={docId ? "Edit hotel voucher" : "New hotel voucher"}
+        description="Type the booking details in the grey boxes. Required fields are marked *. Save when you are ready to download or share the PDF."
       />
 
-      <div className="grid gap-5 xl:grid-cols-[1fr_380px]">
-        <div className="space-y-5">
-          <ExtractUploader<ExtractedVoucher>
-            type="voucher"
-            onFields={(f) => {
-              let count = 0;
-              setData((prev) => {
-                const r = applyExtract(prev, f);
-                count = r.count;
-                return r.data;
-              });
-              return count;
-            }}
-          />
-
+      <EditorLayout
+        preview={<LivePreview kind="hotel_voucher" data={data} variant="panel" />}
+        form={
+        <>
+          <FormProgress steps={progress} />
           <SectionCard id="voucher-property" title="Property" icon={Building2}>
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Hotel name" htmlFor="hotelName" required className="md:col-span-2" hint="Suggestions are optional. Choosing one fills name, address and contact details from your earlier vouchers.">
@@ -700,26 +642,35 @@ export default function VoucherEditorPage() {
           </SectionCard>
 
           <SectionCard title="PDF template" description="Pick a layout, then a colour for headers and highlights." icon={Palette}>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div role="radiogroup" aria-label="PDF template" className="grid gap-4 sm:grid-cols-2">
               {VOUCHER_TEMPLATES.map((t) => {
                 const selected = data.template === t.id;
                 return (
                   <button
                     key={t.id}
                     type="button"
+                    role="radio"
+                    aria-checked={selected}
                     onClick={() => patch({ template: t.id, color: t.color })}
-                    className={cn("overflow-hidden rounded-2xl border text-left transition", selected ? "border-brand-400 ring-4 ring-brand-100" : "border-slate-200 hover:border-brand-200")}
+                    className={cn(
+                      "flex flex-col rounded-2xl border bg-white p-3 text-left transition",
+                      selected ? "border-[var(--primary)] ring-2 ring-[var(--primary)]/25" : "border-slate-200 hover:border-slate-300 hover:shadow-sm"
+                    )}
                   >
-                    <TemplateThumb id={t.id} color={selected ? data.color : t.color} />
-                    <div className="flex items-center justify-between px-3 py-2">
-                      <span className="text-sm font-semibold text-slate-900">{t.label}</span>
-                      {selected ? <Check className="h-4 w-4 text-brand-500" /> : null}
-                    </div>
+                    <span className="relative block overflow-hidden rounded-xl border border-slate-200">
+                      <TemplateThumb id={t.id} color={selected ? data.color : t.color} />
+                      {selected ? (
+                        <span className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white shadow">
+                          <Check className="h-4 w-4" strokeWidth={3} />
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="mt-3 px-1 text-[15px] font-semibold text-slate-900">{t.label}</span>
+                    <span className="mt-0.5 px-1 pb-1 text-sm leading-snug text-slate-500">{t.description.replace(/^[^—]*—\s*/, "")}</span>
                   </button>
                 );
               })}
             </div>
-            <p className="mt-2 text-xs text-slate-500">Selected: {VOUCHER_TEMPLATES.find((t) => t.id === data.template)?.description}</p>
             <div className="mt-5">
               <p className="flex items-center gap-2 text-sm font-medium text-slate-700">
                 Voucher colour <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-bold uppercase text-brand-700">Beta</span>
@@ -736,69 +687,42 @@ export default function VoucherEditorPage() {
               </div>
             </div>
           </SectionCard>
-        </div>
 
-        {/* Summary + generate */}
-        {/* Sticky on wide screens; scrolls on its own when the panel is taller than the window. */}
-        <aside className="space-y-4 xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto xl:pb-2" aria-label="Voucher summary and generate PDF">
-          <FormProgress steps={progress} />
-          <LivePreview kind="hotel_voucher" data={data} />
-          <div className="rounded-3xl border border-slate-200 bg-white p-5">
-            <p className="text-sm font-semibold text-slate-900">Voucher summary</p>
-            <dl className="mt-3 space-y-2 text-sm">
-              {[
-                ["Hotel", data.hotelName || "—"],
-                ["Guest", [data.guestTitle, data.guestFirstName, data.guestLastName].filter(Boolean).join(" ") || "—"],
-                ["Stay", data.checkIn && data.checkOut ? `${data.checkIn} → ${data.checkOut} · ${stayNights}N` : "Set check-in and check-out"],
-                ["Rooms", `${data.rooms.length} · ${data.rooms.reduce((n, r) => n + r.adults, 0)} adults, ${data.rooms.reduce((n, r) => n + r.children, 0)} children`],
-                ["HCN", data.hcn || "—"],
-                ["Fare", data.fareMode === "hide" ? "Hidden on PDF" : money(fare.total, data.currency)],
-                ["Template", VOUCHER_TEMPLATES.find((t) => t.id === data.template)?.label ?? ""],
-              ].map(([k, v]) => (
-                <div key={k} className="flex justify-between gap-3">
-                  <dt className="text-slate-500">{k}</dt>
-                  <dd className="text-right font-medium text-slate-900">{v}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-
-          <div id="voucher-generate" className="scroll-mt-28 rounded-3xl border border-brand-200 bg-white p-5">
-            <Field label="Who is preparing this voucher?" htmlFor="preparedBy" required hint="Enter your name. It will appear on the PDF and in your saved voucher history.">
+          <SectionCard id="voucher-generate" title="Prepared by" description="Your name appears on the PDF and in your saved voucher history.">
+            <Field label="Who is preparing this voucher?" htmlFor="preparedBy" required>
               <TextInput id="preparedBy" value={data.preparedBy} onChange={(e) => patch({ preparedBy: e.target.value })} placeholder="Your name" />
             </Field>
             {agent.brandLogo ? (
               <div className="mt-3 flex items-center gap-3 rounded-2xl bg-white p-2 ring-1 ring-slate-200">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={agent.brandLogo} alt="Brand logo" className="h-10 w-14 object-contain" />
-                <label className="flex items-center gap-2 text-xs text-slate-600">
+                <label className="flex items-center gap-2 text-sm text-slate-600">
                   <input type="checkbox" checked={!data.withoutLogo} onChange={(e) => patch({ withoutLogo: !e.target.checked })} className="h-4 w-4 accent-brand-500" />
                   Show my logo on this voucher
                 </label>
               </div>
             ) : (
-              <button type="button" onClick={() => setLogoPrompt("entry")} className="mt-3 w-full rounded-2xl border border-dashed border-brand-300 bg-white p-3 text-left text-xs text-slate-600 hover:bg-brand-50">
+              <button type="button" onClick={() => setLogoPrompt("entry")} className="mt-3 w-full rounded-2xl border border-dashed border-brand-300 bg-white p-3 text-left text-sm text-slate-600 hover:bg-brand-50">
                 Without your logo, the hotel voucher feels incomplete. <span className="font-semibold text-brand-600">Add brand logo</span>
               </button>
             )}
-            {error ? <p role="alert" className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p> : null}
-            <div className="mt-4 grid gap-2">
-              <button type="button" onClick={() => generate()} disabled={generating || saving} className={cn(primaryBtn, "h-11 w-full")}>
-                {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileCheck2 className="h-4 w-4" />}
-                {generating ? "Generating…" : "Save & Generate PDF"}
-              </button>
-              <button type="button" onClick={saveDraft} disabled={saving || generating} className={cn(secondaryBtn, "w-full")}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <BedDouble className="h-4 w-4" />}
-                {saving ? "Saving…" : dirty || !docId ? "Save draft" : "Saved"}
-              </button>
-            </div>
-            <p className="mt-2 text-center text-[11px] text-slate-500">Ready to make a voucher? Fill details, then save &amp; generate a PDF.</p>
-            {docId ? (
-              <Link href="/dashboard/vouchers" className="mt-2 block text-center text-xs font-medium text-slate-500 hover:text-brand-600">Back to your vouchers</Link>
-            ) : null}
-          </div>
-        </aside>
-      </div>
+          </SectionCard>
+
+          {error ? <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
+
+          <SaveBar description="Save your voucher — we generate the PDF so you can download or share it.">
+            <button type="button" onClick={saveDraft} disabled={saving || generating} className={secondaryBtn}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <BedDouble className="h-4 w-4" />}
+              {saving ? "Saving…" : dirty || !docId ? "Save draft" : "Saved"}
+            </button>
+            <button type="button" onClick={() => generate()} disabled={generating || saving} className={cn(primaryBtn, "h-11 px-6")}>
+              {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileCheck2 className="h-4 w-4" />}
+              {generating ? "Generating…" : "Save & generate PDF"}
+            </button>
+          </SaveBar>
+        </>
+        }
+      />
 
       <LogoPromptDialog
         open={logoPrompt !== null}
